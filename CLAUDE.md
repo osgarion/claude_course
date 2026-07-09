@@ -64,9 +64,30 @@ formou úkolů z kurzu, které mu bude postupně zadávat.
   Košík se mezi stránkami předává přes `localStorage` (víceres stránkový
   web, ne SPA). CSRF token pro fetch POST se čte z `csrftoken` cookie
   (nastaví ji `{% csrf_token %}` na stránce).
-- `catalog/tests.py` existuje a pokrývá slug, skladovou kontrolu,
-  souběžný nákup, permissions a `unique_together` recenzí — spouštět přes
-  `python manage.py test catalog`.
+- Testy běží přes **pytest + pytest-django** (ne `manage.py test`), podle
+  vrstvené struktury inspirované `test-suite-readme.md` a testy
+  referenčního repa (viz níže) — přizpůsobené na sync Django a jednu app
+  `catalog` (vrstva `integration` na cizí API se nepoužívá, projekt žádné
+  cizí API nevolá):
+  - `tests/unit/` — čistá logika bez DB (např. `ProductVariant.price`
+    fallback). Vynuceno metatestem, DB fixtures jsou tam zakázané.
+  - `tests/db/` — reálné ORM přes `pytest.mark.django_db`: slug, skladová
+    kontrola, souběžný nákup posledního kusu, `unique_together` recenzí.
+  - `tests/api/` — plný request cyklus přes DRF `APIClient`: permissions
+    (cizí adresa → 404, jen `is_staff` může zakládat kategorie).
+  - `tests/arch/` — AST kontrola směru importů uvnitř `catalog/`
+    (`models` nesmí importovat `serializers`/`views`/`permissions`,
+    `serializers` nesmí `views`) s ratchet allowlistem
+    (`tests/arch/allowlist.py`, teď prázdný).
+  - `tests/meta/` — pravidla o samotné test suite (unit testy nesmí sahat
+    na DB/APIClient, každý `test_*.py` musí být ve známé podsložce).
+  - Sdílené fixtures v `tests/conftest.py` (`api_client`, `auth_client`,
+    `user`, `staff_user`, `make_address`, `make_product`).
+  - Spouštění: `make test` (jen unit) / `make test-db` / `make test-api`
+    / `make test-arch` / `make test-meta` / `make test-all` (Makefile v
+    `backend/`), nebo přímo `.venv/bin/pytest tests/<slozka>`.
+  - `pytest`, `pytest-django` jsou v `requirements.txt`; nastavení je v
+    `backend/pytest.ini`.
 
 ## Referenční repo
 
