@@ -9,6 +9,8 @@
 </head>
 <body>
 
+  {% csrf_token %}
+
   <header class="site-header">
     <div class="logo">
       <span class="logo-emoji">🕹️</span>
@@ -17,12 +19,17 @@
     <nav class="main-nav">
       <a href="#">Domů</a>
       <a href="#products">Produkty</a>
-      <a href="#">Kontakt</a>
+      {% if user.is_authenticated %}
+        <span>Ahoj, {{ user.username }}</span>
+        <a href="{% url 'logout' %}">Odhlásit</a>
+      {% else %}
+        <a href="{% url 'login' %}">Přihlásit</a>
+      {% endif %}
     </nav>
-    <div class="cart">
+    <a href="/pokladna/" class="cart">
       <span class="cart-emoji">🛒</span>
       <span id="cart-count">0</span>
-    </div>
+    </a>
   </header>
 
   <section class="hero">

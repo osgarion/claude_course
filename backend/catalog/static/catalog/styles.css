@@ -240,6 +240,122 @@ body {
   text-decoration: none;
 }
 
+/* ---------- Přihlášení ---------- */
+
+.auth-section,
+.checkout-page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.checkout-page {
+  max-width: 700px;
+}
+
+.auth-section h1,
+.checkout-page h1 {
+  margin-bottom: 1.5rem;
+}
+
+.auth-form,
+.address-form,
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-form input,
+.address-form input,
+.review-form select,
+.review-form textarea {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-text-muted);
+  border-radius: var(--radius);
+  font: inherit;
+}
+
+.form-error {
+  color: #d63031;
+  margin-bottom: 1rem;
+}
+
+/* ---------- Detail produktu ---------- */
+
+.product-detail-section {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.product-detail-gallery img {
+  width: 100%;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.product-detail-info h1 {
+  margin-bottom: 0.5rem;
+}
+
+.category-tag {
+  display: inline-block;
+  color: var(--color-primary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.product-detail-info .price {
+  font-size: 1.5rem;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.product-detail-info select {
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-text-muted);
+  margin-bottom: 1rem;
+}
+
+.reviews-section {
+  grid-column: 1 / -1;
+}
+
+.review-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.review-author {
+  color: var(--color-text-muted);
+  margin-left: 0.5rem;
+}
+
+/* ---------- Pokladna ---------- */
+
+.checkout-items {
+  list-style: none;
+  margin-bottom: 0.5rem;
+}
+
+.checkout-total {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.address-option {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
 /* ---------- Responzivita pro mobil ---------- */
 
 @media (max-width: 600px) {
@@ -267,5 +383,9 @@ body {
      by první tlačítko bylo "uříznuté" mimo obrazovku už při načtení */
   .category-filters {
     justify-content: flex-start;
+  }
+
+  .product-detail-section {
+    grid-template-columns: 1fr;
   }
 }

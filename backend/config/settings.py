@@ -93,5 +93,12 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Kam přesměrovat po přihlášení/odhlášení přes vestavěné auth views
+# (django.contrib.auth.urls) - zpět na hlavní stránku obchodu.
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"

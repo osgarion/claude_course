@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Přihlášení — Pixel Pantry</title>
+  <link rel="stylesheet" href="{% static 'catalog/styles.css' %}">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="logo">
+      <span class="logo-emoji">🕹️</span>
+      <span class="logo-text">Pixel Pantry</span>
+    </div>
+  </header>
+
+  <section class="auth-section">
+    <h1>Přihlášení</h1>
+
+    {% if form.errors %}
+      <p class="form-error">Nesprávné uživatelské jméno nebo heslo.</p>
+    {% endif %}
+
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <label for="id_username">Uživatelské jméno</label>
+      {{ form.username }}
+
+      <label for="id_password">Heslo</label>
+      {{ form.password }}
+
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="btn-primary">Přihlásit se</button>
+    </form>
+  </section>
+
+</body>
+</html>
