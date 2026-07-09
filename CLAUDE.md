@@ -96,3 +96,8 @@ formou úkolů z kurzu, které mu bude postupně zadávat.
   nejnovější kompatibilní wheel.
 - Media soubory (nahrané obrázky přes Pillow/`ImageField`) jdou do
   `backend/media/`, které je v `.gitignore` stejně jako `db.sqlite3`.
+- `db.sqlite3` je lokální a negitovaný — po čerstvém `migrate` je prázdný.
+  Ukázková data (kategorie + produkty podle motivu "Pixel Pantry") a
+  lokální superuser (`admin`/`admin`, jen pro dev) se zakládají přes
+  `python manage.py shell -c "..."` (viz historie konverzace), ne
+  fixture/migrací — při dalším čistém checkoutu je potřeba zopakovat.
