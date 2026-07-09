@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Pantry — retro obchod</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="logo">
+      <span class="logo-emoji">🕹️</span>
+      <span class="logo-text">Pixel Pantry</span>
+    </div>
+    <nav class="main-nav">
+      <a href="#">Domů</a>
+      <a href="#products">Produkty</a>
+      <a href="#">Kontakt</a>
+    </nav>
+    <div class="cart">
+      <span class="cart-emoji">🛒</span>
+      <span id="cart-count">0</span>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Retro styl pro tvůj digitální i reálný svět</h1>
+    <p>Pixel art hrnky, samolepky a plakáty — ručně vybrané pro nostalgiky.</p>
+    <a href="#products" class="btn-primary">Prohlédnout produkty</a>
+  </section>
+
+  <section id="products" class="products-section">
+    <h2>Naše produkty</h2>
+
+    <div class="category-filters">
+      <button class="filter-btn active" data-category="vse">Vše</button>
+      <button class="filter-btn" data-category="hrnky">Hrnky</button>
+      <button class="filter-btn" data-category="samolepky">Samolepky</button>
+      <button class="filter-btn" data-category="plakaty">Plakáty</button>
+      <button class="filter-btn" data-category="obleceni">Oblečení</button>
+      <button class="filter-btn" data-category="doplnky">Doplňky</button>
+    </div>
+
+    <div class="product-grid">
+
+      <article class="product-card" data-category="hrnky">
+        <img src="https://placehold.co/300x300/6c5ce7/ffffff?text=Hrnek" alt="Pixel hrnek">
+        <h3>Pixel Hrnek "Level Up"</h3>
+        <p class="price">299 Kč</p>
+        <button class="btn-add-to-cart" data-product-name="Pixel Hrnek 'Level Up'">Přidat do košíku</button>
+      </article>
+
+      <article class="product-card" data-category="samolepky">
+        <img src="https://placehold.co/300x300/00b894/ffffff?text=Samolepky" alt="Sada samolepek">
+        <h3>Sada samolepek "8-bit"</h3>
+        <p class="price">129 Kč</p>
+        <button class="btn-add-to-cart" data-product-name="Sada samolepek '8-bit'">Přidat do košíku</button>
+      </article>
+
+      <article class="product-card" data-category="plakaty">
+        <img src="https://placehold.co/300x300/e17055/ffffff?text=Plakát" alt="Pixel art plakát">
+        <h3>Plakát "Retro Skyline"</h3>
+        <p class="price">449 Kč</p>
+        <button class="btn-add-to-cart" data-product-name="Plakát 'Retro Skyline'">Přidat do košíku</button>
+      </article>
+
+      <article class="product-card" data-category="obleceni">
+        <img src="https://placehold.co/300x300/0984e3/ffffff?text=Triko" alt="Pixel art triko">
+        <h3>Triko "Game Over"</h3>
+        <p class="price">599 Kč</p>
+        <button class="btn-add-to-cart" data-product-name="Triko 'Game Over'">Přidat do košíku</button>
+      </article>
+
+      <article class="product-card" data-category="doplnky">
+        <img src="https://placehold.co/300x300/fdcb6e/2d3436?text=Podložka" alt="Podložka pod myš">
+        <h3>Podložka "Pixel Forest"</h3>
+        <p class="price">249 Kč</p>
+        <button class="btn-add-to-cart" data-product-name="Podložka 'Pixel Forest'">Přidat do košíku</button>
+      </article>
+
+      <article class="product-card" data-category="doplnky">
+        <img src="https://placehold.co/300x300/d63031/ffffff?text=Odznaky" alt="Sada odznaků">
+        <h3>Sada odznaků "Heroes"</h3>
+        <p class="price">179 Kč</p>
+        <button class="btn-add-to-cart" data-product-name="Sada odznaků 'Heroes'">Přidat do košíku</button>
+      </article>
+
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p>&copy; 2026 Pixel Pantry. Všechna práva vyhrazena.</p>
+    <div class="footer-links">
+      <a href="#">Obchodní podmínky</a>
+      <a href="#">Kontakt</a>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

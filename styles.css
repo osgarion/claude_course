@@ -1,0 +1,271 @@
+/* ---------- Základní reset a proměnné ---------- */
+
+/* box-sizing: border-box = padding a border se počítají DO šířky prvku,
+   ne navíc. Bez toho by layouty s paddingem a %-šířkami dělaly nepříjemná
+   překvapení. Nastavujeme to na úplně všechno pomocí selektoru *. */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* barevná paleta jako proměnné, ať se dá snadno změnit na jednom místě */
+  --color-primary: #6c5ce7;      /* fialová - hlavní akcentová barva */
+  --color-primary-dark: #5a4bd6;
+  --color-bg: #f7f7fb;           /* světlé pozadí stránky */
+  --color-surface: #ffffff;      /* pozadí karet */
+  --color-text: #2d3436;
+  --color-text-muted: #636e72;
+  --radius: 12px;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* ---------- Hlavička ---------- */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.logo-emoji {
+  font-size: 1.5rem;
+}
+
+.main-nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.main-nav a {
+  text-decoration: none;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.main-nav a:hover {
+  color: var(--color-primary);
+}
+
+.cart {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.cart-emoji {
+  font-size: 1.3rem;
+}
+
+/* ---------- Hero sekce ---------- */
+
+.hero {
+  text-align: center;
+  padding: 5rem 1.5rem;
+  background: linear-gradient(135deg, var(--color-primary), #a29bfe);
+  color: white;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.15rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.btn-primary {
+  display: inline-block;
+  background-color: white;
+  color: var(--color-primary-dark);
+  padding: 0.9rem 2rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 0.15s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+/* ---------- Produkty ---------- */
+
+.products-section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+.products-section h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* ---------- Filtr kategorií ---------- */
+
+.category-filters {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+  /* na úzkém okně se řada tlačítek nezalamuje, ale scrolluje vodorovně -
+     viz media query níže, kde se justify-content mění na flex-start */
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.filter-btn {
+  flex: 0 0 auto;
+  padding: 0.5rem 1.1rem;
+  border: 2px solid var(--color-primary);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.filter-btn:hover {
+  background-color: rgba(108, 92, 231, 0.1);
+}
+
+.filter-btn.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* auto-fit + minmax = responzivní mřížka bez media query:
+   prohlížeč si sám spočítá, kolik sloupců po 220px se vejde do řádku. */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.product-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+}
+
+.product-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.product-card h3 {
+  font-size: 1.05rem;
+  padding: 1rem 1rem 0.25rem;
+}
+
+.price {
+  padding: 0 1rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.btn-add-to-cart {
+  margin: 1rem;
+  margin-top: auto;
+  padding: 0.7rem;
+  border: none;
+  border-radius: var(--radius);
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-add-to-cart:hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* ---------- Patička ---------- */
+
+.site-footer {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  color: var(--color-text-muted);
+}
+
+.footer-links {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.footer-links a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+/* ---------- Responzivita pro mobil ---------- */
+
+@media (max-width: 600px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .main-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero {
+    padding: 3rem 1rem;
+  }
+
+  .hero h1 {
+    font-size: 1.75rem;
+  }
+
+  /* na mobilu tlačítka nechceme centrovat, protože při přetečení šířky
+     by první tlačítko bylo "uříznuté" mimo obrazovku už při načtení */
+  .category-filters {
+    justify-content: flex-start;
+  }
+}
