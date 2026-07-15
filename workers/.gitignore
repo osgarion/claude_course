@@ -1,0 +1,5 @@
+node_modules/
+.wrangler/
+# Generuje `npx wrangler types` z wrangler.jsonc - není potřeba verzovat.
+worker-configuration.d.ts
+.dev.vars

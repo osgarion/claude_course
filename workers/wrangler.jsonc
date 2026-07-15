@@ -1,0 +1,78 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pixel-pantry",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+
+  // Vyžaduje @anthropic-ai/sdk (chatbot) - sahá na node builtiny (stream, crypto).
+  // Bez toho workerd při importu SDK spadne.
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Statický frontend servíruje tentýž Worker, co API -> stejný origin,
+  // žádné CORS (stejně jako dnešní Django verze), jeden deploy.
+  //
+  // run_worker_first vynutí, aby /api/* a /produkt/* šly na Worker a ne
+  // do statických assetů. /produkt/<slug>/ Worker přepíše na product.html
+  // (statický hosting neumí dynamické routy) - viz src/index.ts.
+  // POZOR: nikdy nenastavovat not_found_handling na "single-page-application",
+  // ten by vracel index.html i na /api/* a API by tiše přestalo fungovat.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/produkt/*"],
+    "not_found_handling": "404-page"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pixel-pantry",
+      "database_id": "2236b0cc-4bc8-46ba-abcf-a4215e7f7933",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Ochrana loginu/registrace proti brute-force (period smí být jen 10 nebo 60 s).
+  // Pozor: je to per-colo a eventually consistent - tedy zmírnění zneužití,
+  // ne bezpečnostní hranice (DRF throttling byl přesný). Middleware se chová
+  // jako no-op, když binding chybí (testy, `wrangler dev`).
+  "ratelimits": [
+    {
+      "name": "AUTH_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    // Chat brzdíme kvůli nákladům - každý dotaz jde na placené Anthropic API.
+    {
+      "name": "CHAT_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 20, "period": 60 }
+    }
+  ],
+
+  "vars": {
+    // PBKDF2 je na Workers zastropované na 100k iterací a free plan má
+    // 10 ms CPU/request - proto výrazně méně než Django (~1,2M). Viz CLAUDE.md.
+    "PBKDF2_ITERATIONS": "100000",
+
+    // ZÁMĚRNĚ PRÁZDNÉ - tady nikdy nesmí být skutečný klíč (soubor je v gitu).
+    // Je to jen deklarace, aby typ Env existoval i po čerstvém checkoutu.
+    // Skutečná hodnota se dodává mimo git:
+    //   lokálně   -> workers/.dev.vars (gitignorovaný, šablona .dev.vars.example)
+    //   produkce  -> npx wrangler secret put ANTHROPIC_API_KEY  (secret přebije var)
+    // Prázdná hodnota = chat vrací 503, zbytek e-shopu jede dál.
+    "ANTHROPIC_API_KEY": "",
+
+    // Stejný vzor jako ANTHROPIC_API_KEY výš - prázdné v gitu, skutečné
+    // hodnoty přes .dev.vars (lokálně) / wrangler secret put (produkce).
+    // Bez STRIPE_SECRET_KEY je platba fake (okamžitě "zaplaceno") jako dřív -
+    // Stripe Elements formulář ve frontendu zatím není zapojený (samostatný
+    // budoucí úkol), jen backend (PaymentIntent, confirm_payment, webhook).
+    "STRIPE_SECRET_KEY": "",
+    "STRIPE_PUBLISHABLE_KEY": "",
+    "STRIPE_WEBHOOK_SECRET": "",
+    "STRIPE_CURRENCY": "czk"
+  },
+
+  "observability": { "enabled": true }
+}

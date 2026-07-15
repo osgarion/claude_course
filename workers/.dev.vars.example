@@ -1,0 +1,16 @@
+# Šablona pro lokální vývoj. Zkopíruj na `.dev.vars` (ten je gitignorovaný)
+# a doplň skutečný klíč.
+#
+# V produkci se klíč NEnastavuje tady ani ve wrangler.jsonc, ale jako secret:
+#   npx wrangler secret put ANTHROPIC_API_KEY
+#
+# Bez klíče vrací POST /api/chat 503 (zbytek e-shopu funguje normálně).
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Testovací Stripe klíče (Dashboard -> Developers -> API keys / Webhooks).
+# Bez STRIPE_SECRET_KEY je platba fake (okamžitě "zaplaceno") jako dřív.
+# STRIPE_WEBHOOK_SECRET pro lokální test webhooku vygeneruje `stripe listen
+# --forward-to http://localhost:8787/api/stripe/webhook` (Stripe CLI).
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...

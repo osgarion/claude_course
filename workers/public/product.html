@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produkt — Pixel Pantry</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <!--
+    Tenhle soubor obsluhuje /produkt/<slug>/ - Worker na něj cestu přepíše
+    (statické assety neumí dynamické routy) a app.js si slug přečte z URL.
+  -->
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="/" class="logo-emoji">🕹️</a>
+      <span class="logo-text">Pixel Pantry</span>
+    </div>
+    <nav class="main-nav">
+      <a href="/">Zpět do obchodu</a>
+      <span id="nav-auth"></span>
+    </nav>
+    <a href="/pokladna" class="cart">
+      <span class="cart-emoji">🛒</span>
+      <span id="cart-count">0</span>
+    </a>
+  </header>
+
+  <main class="product-detail-section" id="product-detail">
+    <p class="loading-message">Načítám produkt…</p>
+  </main>
+
+  <script src="/static/auth.js"></script>
+  <script src="/static/app.js"></script>
+  <script src="/static/chat.js"></script>
+</body>
+</html>

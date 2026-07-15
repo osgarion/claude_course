@@ -1,0 +1,33 @@
+{
+  "name": "pixel-pantry",
+  "version": "1.0.0",
+  "description": "Pixel Pantry e-shop na Cloudflare Workers + D1",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run tests/unit",
+    "test:db": "vitest run tests/db",
+    "test:api": "vitest run tests/api",
+    "test:meta": "vitest run tests/meta",
+    "db:migrate:local": "wrangler d1 migrations apply pixel-pantry --local",
+    "db:migrate:remote": "wrangler d1 migrations apply pixel-pantry --remote",
+    "db:seed:local": "wrangler d1 execute pixel-pantry --local --file=./seed.sql",
+    "db:seed:remote": "wrangler d1 execute pixel-pantry --remote --file=./seed.sql"
+  },
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
+    "hono": "^4.12.29",
+    "stripe": "^22.3.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.110.0"
+  }
+}

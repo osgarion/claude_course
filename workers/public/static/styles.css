@@ -1,0 +1,714 @@
+/* ---------- Základní reset a proměnné ---------- */
+
+/* box-sizing: border-box = padding a border se počítají DO šířky prvku,
+   ne navíc. Bez toho by layouty s paddingem a %-šířkami dělaly nepříjemná
+   překvapení. Nastavujeme to na úplně všechno pomocí selektoru *. */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* barevná paleta jako proměnné, ať se dá snadno změnit na jednom místě */
+  --color-primary: #6c5ce7;      /* fialová - hlavní akcentová barva */
+  --color-primary-dark: #5a4bd6;
+  --color-bg: #f7f7fb;           /* světlé pozadí stránky */
+  --color-surface: #ffffff;      /* pozadí karet */
+  --color-text: #2d3436;
+  --color-text-muted: #636e72;
+  --radius: 12px;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* ---------- Hlavička ---------- */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.logo-emoji {
+  font-size: 1.5rem;
+}
+
+.main-nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.main-nav a {
+  text-decoration: none;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.main-nav a:hover {
+  color: var(--color-primary);
+}
+
+.cart {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.cart-emoji {
+  font-size: 1.3rem;
+}
+
+/* ---------- Hero sekce ---------- */
+
+.hero {
+  text-align: center;
+  padding: 5rem 1.5rem;
+  background: linear-gradient(135deg, var(--color-primary), #a29bfe);
+  color: white;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.15rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.btn-primary {
+  display: inline-block;
+  background-color: white;
+  color: var(--color-primary-dark);
+  padding: 0.9rem 2rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 0.15s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  display: inline-block;
+  background-color: transparent;
+  color: var(--color-primary-dark);
+  border: 1px solid var(--color-primary-dark);
+  padding: 0.9rem 2rem;
+  border-radius: var(--radius);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.guest-notice {
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.rating-summary {
+  color: #b8860b;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.coupon-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.coupon-row input {
+  flex: 1;
+}
+
+/* ---------- Produkty ---------- */
+
+.products-section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+.products-section h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* ---------- Filtr kategorií ---------- */
+
+.category-filters {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+  /* na úzkém okně se řada tlačítek nezalamuje, ale scrolluje vodorovně -
+     viz media query níže, kde se justify-content mění na flex-start */
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.filter-btn {
+  flex: 0 0 auto;
+  padding: 0.5rem 1.1rem;
+  border: 2px solid var(--color-primary);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.filter-btn:hover {
+  background-color: rgba(108, 92, 231, 0.1);
+}
+
+.filter-btn.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* auto-fit + minmax = responzivní mřížka bez media query:
+   prohlížeč si sám spočítá, kolik sloupců po 220px se vejde do řádku. */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.product-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+}
+
+.product-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.product-card h3 {
+  font-size: 1.05rem;
+  padding: 1rem 1rem 0.25rem;
+}
+
+.price {
+  padding: 0 1rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.btn-add-to-cart {
+  margin: 1rem;
+  margin-top: auto;
+  padding: 0.7rem;
+  border: none;
+  border-radius: var(--radius);
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-add-to-cart:hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* ---------- Patička ---------- */
+
+.site-footer {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  color: var(--color-text-muted);
+}
+
+.footer-links {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.footer-links a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+/* ---------- Přihlášení ---------- */
+
+.auth-section,
+.checkout-page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.checkout-page {
+  max-width: 700px;
+}
+
+.auth-section h1,
+.checkout-page h1 {
+  margin-bottom: 1.5rem;
+}
+
+.auth-form,
+.address-form,
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-form input,
+.address-form input,
+.review-form select,
+.review-form textarea {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-text-muted);
+  border-radius: var(--radius);
+  font: inherit;
+}
+
+.form-error {
+  color: #d63031;
+  margin-bottom: 1rem;
+}
+
+/* ---------- Detail produktu ---------- */
+
+.product-detail-section {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.product-detail-gallery img {
+  width: 100%;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.product-detail-info h1 {
+  margin-bottom: 0.5rem;
+}
+
+.category-tag {
+  display: inline-block;
+  color: var(--color-primary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.product-detail-info .price {
+  font-size: 1.5rem;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.product-detail-info select {
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-text-muted);
+  margin-bottom: 1rem;
+}
+
+.reviews-section {
+  grid-column: 1 / -1;
+}
+
+.review-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.review-author {
+  color: var(--color-text-muted);
+  margin-left: 0.5rem;
+}
+
+/* ---------- Pokladna ---------- */
+
+.checkout-items {
+  list-style: none;
+  margin-bottom: 0.5rem;
+}
+
+.checkout-total {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.address-option {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* ---------- Chat widget (zákaznická podpora) ---------- */
+
+#chat-widget {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 1000;
+}
+
+#chat-toggle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+#chat-panel {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  right: 0;
+  bottom: 70px;
+  width: 320px;
+  max-width: calc(100vw - 2rem);
+  height: 440px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+#chat-panel.open {
+  display: flex;
+}
+
+#chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 700;
+}
+
+#chat-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+#chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat-msg {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  max-width: 85%;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.chat-msg-user {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: white;
+}
+
+.chat-msg-bot {
+  align-self: flex-start;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+#chat-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-bg);
+}
+
+#chat-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #dcdde1;
+  border-radius: var(--radius);
+}
+
+#chat-form .btn-primary {
+  padding: 0.5rem 1rem;
+}
+
+/* ---------- Responzivita pro mobil ---------- */
+
+@media (max-width: 600px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .main-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero {
+    padding: 3rem 1rem;
+  }
+
+  .hero h1 {
+    font-size: 1.75rem;
+  }
+
+  /* na mobilu tlačítka nechceme centrovat, protože při přetečení šířky
+     by první tlačítko bylo "uříznuté" mimo obrazovku už při načtení */
+  .category-filters {
+    justify-content: flex-start;
+  }
+
+  .product-detail-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Plovoucí chat s podporou ---------- */
+/* Markup vytváří chat.js, ne HTML stránky (viz komentář v chat.js). */
+
+#chat-toggle {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  z-index: 100;
+}
+
+#chat-toggle:hover {
+  background: var(--color-primary-dark);
+}
+
+#chat-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 92px;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, calc(100vw - 48px));
+  height: min(480px, calc(100vh - 140px));
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* Bez tohohle by [hidden] prohrálo s display:flex výš a panel by šel zavřít. */
+#chat-panel[hidden] {
+  display: none;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.chat-header span {
+  flex: 1;
+}
+
+.chat-header-btn {
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.chat-msg {
+  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.chat-msg.user {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.chat-msg.assistant {
+  align-self: flex-start;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.chat-msg.pending {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+#chat-form {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--color-bg);
+}
+
+#chat-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid #dfe6e9;
+  border-radius: var(--radius);
+  font: inherit;
+}
+
+#chat-form button {
+  border: none;
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+#chat-form button:hover {
+  background: var(--color-primary-dark);
+}
+
+/* ---------- Administrace (admin.html) ---------- */
+
+.admin-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.admin-page h1 {
+  margin-bottom: 1.5rem;
+}
+
+.admin-page section {
+  margin-bottom: 3rem;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 480px;
+  margin-bottom: 1rem;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-text-muted);
+  border-radius: var(--radius);
+  font: inherit;
+}
+
+.admin-form-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--color-bg);
+}
+
+.admin-table th {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
