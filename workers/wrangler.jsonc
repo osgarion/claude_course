@@ -71,7 +71,12 @@
     "STRIPE_SECRET_KEY": "",
     "STRIPE_PUBLISHABLE_KEY": "",
     "STRIPE_WEBHOOK_SECRET": "",
-    "STRIPE_CURRENCY": "czk"
+    "STRIPE_CURRENCY": "czk",
+
+    // Stejný vzor jako klíče výš - prázdné v gitu, skutečné DSN přes .dev.vars
+    // (lokálně) / wrangler secret put (produkce). Prázdné = Sentry vypnuté
+    // (enabled:false v src/sentry.ts), reportování chyb se prostě neděje.
+    "SENTRY_DSN": ""
   },
 
   "observability": { "enabled": true }

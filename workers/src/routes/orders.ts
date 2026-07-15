@@ -61,10 +61,31 @@ orders.post("/", async (c) => {
  * Admin výpis napříč všemi zákazníky - MUSÍ být zaregistrovaný před "/:id",
  * ať Hono nezkusí "admin" vzít jako ID objednávky.
  */
+const ORDER_STATUSES = ["pending", "paid", "shipped", "cancelled"];
+
 orders.get("/admin", requireStaff, async (c) => {
+  // Volitelné filtry. Neznámý ?status se ignoruje (nefiltruje), ať překlep
+  // nevrátí prázdno bez vysvětlení. ?search hledá přes e-mail zákazníka.
+  const status = c.req.query("status");
+  const search = c.req.query("search")?.trim();
+  const conditions: string[] = [];
+  const binds: any[] = [];
+  if (status && ORDER_STATUSES.includes(status)) {
+    conditions.push("o.status = ?");
+    binds.push(status);
+  }
+  if (search) {
+    conditions.push("u.email LIKE ?");
+    binds.push(`%${search}%`);
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+
   const { results } = await c.env.DB.prepare(
-    `SELECT o.*, u.email AS user_email FROM orders o LEFT JOIN users u ON u.id = o.user_id ORDER BY o.created_at DESC`,
-  ).all();
+    `SELECT o.*, u.email AS user_email FROM orders o LEFT JOIN users u ON u.id = o.user_id
+       ${where} ORDER BY o.created_at DESC`,
+  )
+    .bind(...binds)
+    .all();
 
   const serialized = await Promise.all(
     (results ?? []).map(async (order: any) => {
@@ -76,6 +97,49 @@ orders.get("/admin", requireStaff, async (c) => {
     }),
   );
   return c.json(serialized);
+});
+
+/**
+ * Detail objednávky pro provozovatele. MUSÍ přes JOIN (SELECT o.* FROM
+ * orders o ...), ne holý dotaz na samotnou tabulku orders podle id - to
+ * hlídá meta počítadlo (tests/meta/rules.test.ts), které počet takových
+ * dotazů stropuje.
+ * Registrováno před "/:id", ať Hono "admin" nezkusí vzít jako ID.
+ */
+orders.get("/admin/:id", requireStaff, async (c) => {
+  const order = await c.env.DB.prepare(
+    `SELECT o.*, u.email AS user_email FROM orders o LEFT JOIN users u ON u.id = o.user_id WHERE o.id = ?`,
+  )
+    .bind(c.req.param("id"))
+    .first<any>();
+  if (!order) return c.json({ detail: "Objednávka nenalezena." }, 404);
+
+  const [items, couponCode] = await Promise.all([
+    orderItems(c.env.DB, order.id),
+    couponCodeFor(c.env.DB, order.coupon_id),
+  ]);
+  return c.json({ ...serializeOrder(order, items, couponCode), customer_email: order.user_email ?? "(host)" });
+});
+
+/**
+ * Hromadné odeslání. {ids: string[]} - každé id přes stejný podmíněný "claim"
+ * UPDATE jako /:id/ship (jen paid -> shipped), celé v jednom db.batch().
+ * Vrací počet reálně odeslaných (řádky, které nebyly 'paid', se přeskočí).
+ */
+orders.post("/admin/bulk-ship", requireStaff, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const ids = Array.isArray(body.ids) ? body.ids : [];
+  if (ids.length === 0) return c.json({ shipped: 0 });
+
+  const now = new Date().toISOString();
+  const statements = ids.map((id: any) =>
+    c.env.DB.prepare(
+      `UPDATE orders SET status = 'shipped', updated_at = ? WHERE id = ? AND status = 'paid'`,
+    ).bind(now, String(id)),
+  );
+  const results = await c.env.DB.batch(statements);
+  const shipped = results.reduce((sum, r: any) => sum + (r.meta?.changes ?? 0), 0);
+  return c.json({ shipped });
 });
 
 /**

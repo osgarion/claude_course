@@ -141,28 +141,52 @@ Nejdůležitější věci, které jinde nezjistíš:
   CRUD API): žádná nová D1 migrace, jen nové endpointy přes existující
   `requireStaff` middleware (`src/auth/middleware.ts`) — stejný vzor jako
   dosavadní kategorie (`categories.ts`).
-  - `POST/PATCH/DELETE /api/products`(`/:id`) — CRUD produktů (jen základní
-    pole, ne varianty/obrázky — vědomě odloženo). `GET /api/products?all=1`
-    funguje jen pro `is_staff` (jinak se tiše ignoruje, stejný vzor jako
-    `onlyApproved` u recenzí) a ukáže i neaktivní produkty.
+  - `POST/PATCH/DELETE /api/products`(`/:id`) — CRUD produktů (základní
+    pole; varianty stále odložené). `GET /api/products?all=1` funguje jen pro
+    `is_staff` (jinak se tiše ignoruje, stejný vzor jako `onlyApproved`
+    u recenzí) a ukáže i neaktivní produkty.
+  - **Obrázky produktu (URL-based):** `GET/POST /api/products/:id/images` +
+    `DELETE /api/products/:id/images/:imageId` (vše `requireStaff`). Ukládá se
+    jen odkaz (`image_url`), ne nahraný soubor — R2 upload zůstává vědomě
+    v Etapě 2 (referenční `eshop-ts` ho taky reálně nepoužívá, R2 na účtu
+    nemá). Nastavení nového `is_primary` shodí ostatní primární v `db.batch()`
+    (jeden primární na produkt). Samostatný staff `GET .../images` existuje,
+    protože veřejný detail produktu je gated na `is_active = 1` a admin
+    potřebuje vidět obrázky i u neaktivních. Cizí kombinace id/produktu → 404.
   - `src/routes/coupons.ts` — na rozdíl od kategorií/produktů je **celé**
     (i `GET` seznamu) za `requireStaff` — kupónové kódy jsou obchodní
     detail, ne veřejný katalog. Nový `serializeCoupon()`.
   - `GET /api/orders/admin` (musí být v `orders.ts` zaregistrovaná PŘED
     `/:id`, ať Hono nezkusí "admin" vzít jako ID objednávky) — výpis napříč
     zákazníky, mimo `accessibleOrder()` (ten je pro vlastníka/hosta, tohle je
-    pro provozovatele). `POST /:id/ship` — hlídaný přechod jen `paid →
-    shipped`, přes `UPDATE ... WHERE status = 'paid' RETURNING *` (stejný
-    "claim" vzor jako placení, žádný nový `SELECT * FROM orders WHERE id = ?`
-    navíc, který by trefil počítadlo ve stávajícím meta pravidle).
+    pro provozovatele). Umí `?status=` (jen z platných stavů, neznámý se
+    ignoruje) a `?search=` (LIKE přes e-mail zákazníka). `POST /:id/ship` —
+    hlídaný přechod jen `paid → shipped`, přes `UPDATE ... WHERE status =
+    'paid' RETURNING *` (stejný "claim" vzor jako placení, žádný nový holý
+    dotaz na tabulku orders podle id, který by trefil počítadlo ve stávajícím
+    meta pravidle).
+  - `GET /api/orders/admin/:id` (taky před `/:id`) — detail pro provozovatele
+    **přes JOIN** (`SELECT o.*, u.email FROM orders o LEFT JOIN users u ...`),
+    NE holý `SELECT * FROM orders WHERE id = ?` — to hlídá meta počítadlo
+    (stropuje počet takových dotazů). **Pozor i na komentáře:** regex v
+    `rules.test.ts` nerozlišuje kód od komentáře, takže tu frázi nesmí
+    doslovně obsahovat ani vysvětlivka. `POST /api/orders/admin/bulk-ship`
+    (`{ids: []}`) — hromadné odeslání, každé id stejným podmíněným claimem
+    v jednom `db.batch()`, vrací počet reálně odeslaných.
   - `PATCH /api/reviews/:id` (nový `src/routes/reviews.ts`) — prosté přepnutí
     `is_approved`, žádná samostatná schvalovací akce (stejně jako Django
     admin `list_editable`).
-  - `serializeUser()` teď vrací i `is_staff` (dřív ne) — jinak by frontend
-    nepoznal, komu zobrazit odkaz "Admin" v navigaci
-    (`public/static/auth.js`). Skutečné vynucení je vždy server-side
-    (`requireStaff` na každém requestu); klientská kontrola na `admin.html`
-    je jen UX.
+  - **Správa uživatelů** (`src/routes/adminUsers.ts`, mount `/api/admin/users`,
+    celé za `requireStaff`): `GET /` (+ `?search` přes e-mail/jméno/příjmení),
+    `PATCH /:id` (přepnutí `is_staff`/`is_active`, obě pole volitelná). Hesla
+    se sem vědomě nedávají. **Pojistka proti sebe-zamčení:** provozovatel si
+    přes svůj vlastní účet nesmí odebrat `is_staff` ani se deaktivovat (→ 400)
+    — přes cizí účet ano. Reference tuhle pojistku nemá.
+  - `serializeUser()` teď vrací i `is_staff`, `is_active` a `date_joined`
+    (dřív ne) — `is_staff` kvůli odkazu "Admin" v navigaci
+    (`public/static/auth.js`), `is_active`/`date_joined` kvůli výpisu
+    uživatelů. Skutečné vynucení je vždy server-side (`requireStaff` na každém
+    requestu); klientská kontrola na `admin.html` je jen UX.
   - Lokální povýšení na staff: `npx wrangler d1 execute pixel-pantry --local
     --command "UPDATE users SET is_staff = 1 WHERE email = '...'"`.
 - Testy: `npm test` ve `workers/` (vitest + `@cloudflare/vitest-pool-workers`,
@@ -173,9 +197,17 @@ Nejdůležitější věci, které jinde nezjistíš:
   workerdy padaly — a vitest pak hlásil suitu **zeleně**, protože testy ze
   spadlých souborů zmizely z počtu. Když se objeví `ECONNRESET` z poolu,
   kontrolovat počet testů, ne jen barvu.
-- **Etapa 2 (zatím CHYBÍ ve Workers verzi):** nahrávání obrázků (R2), Sentry.
-  (Chatbot ✅, Stripe backend ✅ a admin rozhraní ✅ hotové, viz výš —
-  Stripe Elements frontend zůstává vědomě odložený.)
+- **Sentry** (`src/sentry.ts`, `@sentry/cloudflare`): `withSentry(app)` obaluje
+  export ve `src/index.ts`, feature-gated přes `SENTRY_DSN` (prázdné = no-op,
+  stejný fail-safe vzor jako `ANTHROPIC_API_KEY`/`STRIPE_SECRET_KEY`). Do
+  `app.onError` přidán `Sentry.captureException(error)` jen pro neočekávané
+  (ne-HTTP) chyby a jen když je DSN nastavené. DSN nikdy natvrdo — `wrangler.jsonc`
+  `vars` má prázdnou deklaraci, skutečná hodnota přes `.dev.vars` (lokálně) /
+  `wrangler secret put SENTRY_DSN` (produkce).
+- **Etapa 2 — zbývá už jen R2 upload obrázků souborů** (URL-based obrázky ✅,
+  viz admin výš). Hotové: chatbot ✅, Stripe backend ✅, admin rozhraní ✅
+  (vč. správy uživatelů, obrázků, filtrů/hromadného odeslání objednávek),
+  Sentry ✅. Stripe Elements frontend zůstává vědomě odložený.
 
 ## Architektura a konvence backendu (Django — ZMRAZENO, jen reference)
 

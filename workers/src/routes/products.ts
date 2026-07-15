@@ -146,6 +146,66 @@ products.delete("/:id", requireStaff, async (c) => {
   return c.body(null, 204);
 });
 
+// --- Obrázky produktu (jen provozovatel) ---
+// URL-based: ukládáme odkaz (image_url), ne nahraný soubor. Nahrávání do R2
+// je vědomě odložené (Etapa 2) - referenční repo ho taky reálně nepoužívá.
+
+/**
+ * Výpis obrázků produktu pro admin. Veřejný katalog čte obrázky z detailu
+ * produktu (GET /:slug), ten je ale gated na is_active=1 - admin potřebuje
+ * vidět obrázky i u neaktivních produktů, proto samostatný staff endpoint.
+ */
+products.get("/:id/images", requireStaff, async (c) => {
+  const { results } = await c.env.DB.prepare(
+    `SELECT * FROM product_images WHERE product_id = ? ORDER BY id`,
+  )
+    .bind(Number(c.req.param("id")))
+    .all();
+  return c.json((results ?? []).map(serializeImage));
+});
+
+/** Přidání obrázku k produktu. {image_url, alt_text?, is_primary?} */
+products.post("/:id/images", requireStaff, async (c) => {
+  const productId = Number(c.req.param("id"));
+  const exists = await c.env.DB.prepare(`SELECT id FROM products WHERE id = ?`).bind(productId).first();
+  if (!exists) return c.json({ detail: "Produkt nenalezen." }, 404);
+
+  const body = await c.req.json().catch(() => ({}));
+  const imageUrl = String(body.image_url ?? "").trim();
+  if (!imageUrl) return c.json({ image_url: ["Toto pole je povinné."] }, 400);
+
+  const altText = String(body.alt_text ?? "");
+  const isPrimary = body.is_primary === true;
+
+  const insert = c.env.DB.prepare(
+    `INSERT INTO product_images (product_id, image_url, alt_text, is_primary)
+     VALUES (?, ?, ?, ?) RETURNING *`,
+  ).bind(productId, imageUrl, altText, isPrimary ? 1 : 0);
+
+  // Jeden primární obrázek na produkt: nastavení nového primárního shodí
+  // ostatní. db.batch() je atomické - buď se povede obojí, nebo nic.
+  let row: any;
+  if (isPrimary) {
+    const [, inserted] = await c.env.DB.batch<any>([
+      c.env.DB.prepare(`UPDATE product_images SET is_primary = 0 WHERE product_id = ?`).bind(productId),
+      insert,
+    ]);
+    row = inserted.results[0];
+  } else {
+    row = await insert.first<any>();
+  }
+  return c.json(serializeImage(row), 201);
+});
+
+/** Smazání obrázku produktu. Cizí kombinace id/produktu -> 404 (nepotvrzuj existenci). */
+products.delete("/:id/images/:imageId", requireStaff, async (c) => {
+  const result = await c.env.DB.prepare(`DELETE FROM product_images WHERE id = ? AND product_id = ?`)
+    .bind(Number(c.req.param("imageId")), Number(c.req.param("id")))
+    .run();
+  if (result.meta.changes === 0) return c.json({ detail: "Obrázek nenalezen." }, 404);
+  return c.body(null, 204);
+});
+
 products.get("/:slug", async (c) => {
   const db = c.env.DB;
   const product = await db

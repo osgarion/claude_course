@@ -13,10 +13,67 @@ function initAdmin() {
   }
   document.getElementById("admin-content").hidden = false;
 
+  initUserAdmin();
   initProductAdmin();
   initCouponAdmin();
   initOrderAdmin();
   initReviewAdmin();
+}
+
+// ---------- Uživatelé ----------
+
+function initUserAdmin() {
+  const searchForm = document.getElementById("user-search-form");
+  const searchField = document.getElementById("user-search");
+  const rowsEl = document.getElementById("user-rows");
+
+  function renderRows(users) {
+    rowsEl.innerHTML = users
+      .map(
+        (u) => `
+        <tr>
+          <td>${u.email}</td>
+          <td>${[u.first_name, u.last_name].filter(Boolean).join(" ")}</td>
+          <td><input type="checkbox" data-staff="${u.id}" ${u.is_staff ? "checked" : ""}></td>
+          <td><input type="checkbox" data-active="${u.id}" ${u.is_active ? "checked" : ""}></td>
+        </tr>`,
+      )
+      .join("");
+
+    rowsEl.querySelectorAll("[data-staff]").forEach((box) => {
+      box.addEventListener("change", () => patchUser(box.dataset.staff, { is_staff: box.checked }, box));
+    });
+    rowsEl.querySelectorAll("[data-active]").forEach((box) => {
+      box.addEventListener("change", () => patchUser(box.dataset.active, { is_active: box.checked }, box));
+    });
+  }
+
+  async function patchUser(id, payload, box) {
+    const response = await apiFetch(`/api/admin/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      // Server odmítl (typicky sebe-zamčení) - vrať checkbox zpět a řekni proč.
+      box.checked = !box.checked;
+      alert(data.detail || Object.values(data)[0]?.[0] || "Změnu se nepodařilo uložit.");
+    }
+  }
+
+  function loadUsers(search) {
+    const query = search ? `?search=${encodeURIComponent(search)}` : "";
+    return apiFetch(`/api/admin/users${query}`)
+      .then((r) => r.json())
+      .then(renderRows);
+  }
+
+  searchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    loadUsers(searchField.value.trim());
+  });
+
+  loadUsers();
 }
 
 // ---------- Produkty ----------
@@ -35,12 +92,70 @@ function initProductAdmin() {
   const messageEl = document.getElementById("product-message");
   const rowsEl = document.getElementById("product-rows");
 
+  // Obrázky produktu - podsekce viditelná jen při editaci konkrétního produktu
+  // (při zakládání ještě produkt neexistuje, není kam obrázek pověsit).
+  const imagesSection = document.getElementById("product-images-section");
+  const imageRowsEl = document.getElementById("product-image-rows");
+  const imageForm = document.getElementById("product-image-form");
+  const imageUrlField = document.getElementById("image-url");
+  const imageAltField = document.getElementById("image-alt");
+  const imagePrimaryField = document.getElementById("image-primary");
+  const imageMessageEl = document.getElementById("image-message");
+
+  function renderImages(images) {
+    imageRowsEl.innerHTML = images
+      .map(
+        (img) => `
+        <tr>
+          <td><a href="${img.image}" target="_blank" rel="noopener">${img.image}</a></td>
+          <td>${img.alt_text || ""}</td>
+          <td>${img.is_primary ? "★" : ""}</td>
+          <td><button type="button" class="btn-secondary" data-image-delete="${img.id}">Smazat</button></td>
+        </tr>`,
+      )
+      .join("");
+
+    imageRowsEl.querySelectorAll("[data-image-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await apiFetch(`/api/products/${idField.value}/images/${btn.dataset.imageDelete}`, { method: "DELETE" });
+        loadImages(idField.value);
+      });
+    });
+  }
+
+  function loadImages(productId) {
+    return apiFetch(`/api/products/${productId}/images`)
+      .then((r) => r.json())
+      .then(renderImages);
+  }
+
+  imageForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    imageMessageEl.textContent = "";
+    const response = await apiFetch(`/api/products/${idField.value}/images`, {
+      method: "POST",
+      body: JSON.stringify({
+        image_url: imageUrlField.value.trim(),
+        alt_text: imageAltField.value,
+        is_primary: imagePrimaryField.checked,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      imageMessageEl.textContent = data.detail || Object.values(data)[0]?.[0] || "Přidání se nezdařilo.";
+      return;
+    }
+    imageForm.reset();
+    loadImages(idField.value);
+  });
+
   function resetForm() {
     form.reset();
     idField.value = "";
     activeField.checked = true;
     submitBtn.textContent = "Založit produkt";
     cancelBtn.hidden = true;
+    imagesSection.hidden = true;
   }
 
   function fillForm(product) {
@@ -53,6 +168,9 @@ function initProductAdmin() {
     activeField.checked = product.is_active;
     submitBtn.textContent = "Uložit změny";
     cancelBtn.hidden = false;
+    imagesSection.hidden = false;
+    imageMessageEl.textContent = "";
+    loadImages(product.id);
   }
 
   function renderRows(products) {
@@ -242,12 +360,17 @@ function initCouponAdmin() {
 
 function initOrderAdmin() {
   const rowsEl = document.getElementById("order-rows");
+  const filterForm = document.getElementById("order-filter-form");
+  const statusFilter = document.getElementById("order-status-filter");
+  const searchField = document.getElementById("order-search");
+  const bulkShipBtn = document.getElementById("order-bulk-ship-btn");
 
   function renderRows(orders) {
     rowsEl.innerHTML = orders
       .map(
         (order) => `
         <tr>
+          <td>${order.status === "paid" ? `<input type="checkbox" data-pick="${order.id}">` : ""}</td>
           <td>${order.customer_email}</td>
           <td>${order.status}</td>
           <td>${order.total} Kč</td>
@@ -266,10 +389,26 @@ function initOrderAdmin() {
   }
 
   function loadOrders() {
-    return apiFetch("/api/orders/admin")
+    const params = new URLSearchParams();
+    if (statusFilter.value) params.set("status", statusFilter.value);
+    if (searchField.value.trim()) params.set("search", searchField.value.trim());
+    const query = params.toString() ? `?${params}` : "";
+    return apiFetch(`/api/orders/admin${query}`)
       .then((r) => r.json())
       .then(renderRows);
   }
+
+  filterForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    loadOrders();
+  });
+
+  bulkShipBtn.addEventListener("click", async () => {
+    const ids = Array.from(rowsEl.querySelectorAll("[data-pick]:checked")).map((box) => box.dataset.pick);
+    if (ids.length === 0) return;
+    await apiFetch("/api/orders/admin/bulk-ship", { method: "POST", body: JSON.stringify({ ids }) });
+    loadOrders();
+  });
 
   loadOrders();
 }

@@ -23,6 +23,7 @@ import stripeWebhookRoute from "../../src/routes/stripeWebhook.ts?raw";
 import productRoutes from "../../src/routes/products.ts?raw";
 import couponRoutes from "../../src/routes/coupons.ts?raw";
 import reviewRoutes from "../../src/routes/reviews.ts?raw";
+import adminUserRoutes from "../../src/routes/adminUsers.ts?raw";
 
 describe("přístup k objednávkám", () => {
   it("routes/orders.ts načítá objednávku jen přes accessibleOrder()", () => {
@@ -145,10 +146,31 @@ describe("admin", () => {
   it("admin výpis objednávek i odeslání vyžadují requireStaff", () => {
     const adminAt = orderRoutes.indexOf(`orders.get("/admin"`);
     const shipAt = orderRoutes.indexOf(`orders.post("/:id/ship"`);
-    expect(adminAt).toBeGreaterThan(-1);
-    expect(shipAt).toBeGreaterThan(-1);
-    expect(orderRoutes.slice(adminAt, adminAt + 60)).toContain("requireStaff");
-    expect(orderRoutes.slice(shipAt, shipAt + 60)).toContain("requireStaff");
+    const detailAt = orderRoutes.indexOf(`orders.get("/admin/:id"`);
+    const bulkAt = orderRoutes.indexOf(`orders.post("/admin/bulk-ship"`);
+    for (const at of [adminAt, shipAt, detailAt, bulkAt]) {
+      expect(at).toBeGreaterThan(-1);
+      expect(orderRoutes.slice(at, at + 60)).toContain("requireStaff");
+    }
+  });
+
+  it("správa uživatelů je celá za requireStaff", () => {
+    // /api/admin/users umí měnit is_staff/is_active - nikdy nesmí být veřejné.
+    const getAt = adminUserRoutes.indexOf(`adminUsers.get("/"`);
+    const patchAt = adminUserRoutes.indexOf(`adminUsers.patch("/:id"`);
+    expect(getAt).toBeGreaterThan(-1);
+    expect(patchAt).toBeGreaterThan(-1);
+    expect(adminUserRoutes.slice(getAt, getAt + 40)).toContain("requireStaff");
+    expect(adminUserRoutes.slice(patchAt, patchAt + 40)).toContain("requireStaff");
+  });
+
+  it("úpravy obrázků produktu jdou přes requireStaff", () => {
+    const postAt = productRoutes.indexOf(`products.post("/:id/images"`);
+    const deleteAt = productRoutes.indexOf(`products.delete("/:id/images/:imageId"`);
+    expect(postAt).toBeGreaterThan(-1);
+    expect(deleteAt).toBeGreaterThan(-1);
+    expect(productRoutes.slice(postAt, postAt + 60)).toContain("requireStaff");
+    expect(productRoutes.slice(deleteAt, deleteAt + 80)).toContain("requireStaff");
   });
 
   it("kupóny nejsou veřejně vypsatelné - i GET seznamu je jen pro provozovatele", () => {

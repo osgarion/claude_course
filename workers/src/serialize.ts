@@ -77,6 +77,8 @@ export function serializeUser(row: any) {
     first_name: row.first_name,
     last_name: row.last_name,
     is_staff: Boolean(row.is_staff),
+    is_active: Boolean(row.is_active),
+    date_joined: row.date_joined,
   };
 }
 

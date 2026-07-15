@@ -696,6 +696,23 @@ body {
   gap: 0.75rem;
 }
 
+/* Řádkové formuláře (hledání uživatelů, filtr objednávek, přidání obrázku). */
+.admin-form-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.admin-form-inline input[type="text"],
+.admin-form-inline input[type="url"],
+.admin-form-inline select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-bg);
+  border-radius: var(--radius);
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;

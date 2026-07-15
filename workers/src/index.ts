@@ -1,8 +1,10 @@
+import * as Sentry from "@sentry/cloudflare";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { authOptional } from "./auth/middleware.js";
 import addresses from "./routes/addresses.js";
+import adminUsers from "./routes/adminUsers.js";
 import auth from "./routes/auth.js";
 import categories from "./routes/categories.js";
 import chat from "./routes/chat.js";
@@ -11,6 +13,7 @@ import orders from "./routes/orders.js";
 import products from "./routes/products.js";
 import reviews from "./routes/reviews.js";
 import stripeWebhook from "./routes/stripeWebhook.js";
+import { withSentry } from "./sentry.js";
 import type { AppEnv } from "./types.js";
 
 const app = new Hono<AppEnv>();
@@ -40,6 +43,7 @@ app.route("/api/addresses", addresses);
 app.route("/api/orders", orders);
 app.route("/api/coupons", coupons);
 app.route("/api/chat", chat);
+app.route("/api/admin/users", adminUsers);
 app.route("/api/stripe", stripeWebhook);
 app.route("/api/reviews", reviews);
 
@@ -59,10 +63,15 @@ app.onError((error, c) => {
   if (error instanceof HTTPException) {
     return c.json({ detail: error.message }, error.status);
   }
+  // Jen neočekávané (ne-HTTP) chyby jdou do Sentry, a jen když je DSN
+  // nastavené (prázdné = no-op, stejný fail-safe jako chatbot/Stripe).
+  if (c.env.SENTRY_DSN) Sentry.captureException(error);
   console.error("Neošetřená chyba:", error);
   return c.json({ detail: "Něco se pokazilo." }, 500);
 });
 
 app.notFound((c) => c.json({ detail: "Nenalezeno." }, 404));
 
-export default app;
+// withSentry obalí celý handler - zachytí i chyby mimo onError (např. při
+// startu). Bez SENTRY_DSN je to no-op, takže výchozí chování se nemění.
+export default withSentry(app);
