@@ -1,8 +1,10 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .models import (
     Address,
     Category,
+    Coupon,
     Order,
     OrderItem,
     Payment,
@@ -10,7 +12,30 @@ from .models import (
     ProductImage,
     ProductVariant,
     Review,
+    User,
 )
+
+
+@admin.register(User)
+class UserAdmin(DjangoUserAdmin):
+    """Login e-mailem, žádné pole username - fieldsets podle toho upravené."""
+
+    ordering = ["email"]
+    list_display = ["email", "is_staff", "is_active"]
+    fieldsets = (
+        (None, {"fields": ("email", "password")}),
+        ("Oprávnění", {
+            "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
+        }),
+        ("Důležitá data", {"fields": ("last_login", "date_joined")}),
+    )
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": ("email", "password1", "password2"),
+        }),
+    )
+    search_fields = ("email",)
 
 
 class ProductImageInline(admin.TabularInline):
@@ -42,7 +67,17 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "status", "shipping_address", "created_at")
+    list_display = (
+        "id",
+        "user",
+        "status",
+        "shipping_address",
+        "coupon",
+        "subtotal",
+        "discount_amount",
+        "total",
+        "created_at",
+    )
     list_filter = ("status",)
     inlines = [OrderItemInline]
 
@@ -55,8 +90,15 @@ class AddressAdmin(admin.ModelAdmin):
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ("order", "amount", "method", "status", "paid_at")
-    list_filter = ("method", "status")
+    list_display = ("order", "amount", "method", "status", "provider", "transaction_id", "paid_at")
+    list_filter = ("method", "status", "provider")
+
+
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ("code", "discount_type", "value", "is_active", "valid_from", "valid_to")
+    list_filter = ("discount_type", "is_active")
+    search_fields = ("code",)
 
 
 @admin.register(Review)

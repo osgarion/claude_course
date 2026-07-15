@@ -28,7 +28,7 @@ def test_second_review_from_same_user_is_rejected(auth_client, make_product, use
 def test_anonymous_only_sees_approved_reviews(api_client, make_product, user, django_user_model):
     from catalog.models import Review
 
-    other_user = django_user_model.objects.create_user("uzivatel_b", password="heslo123")
+    other_user = django_user_model.objects.create_user(email="uzivatel_b@example.com", password="heslo123")
     product = make_product(name="Podložka", price="199.00", stock=5)
     Review.objects.create(product=product, user=user, rating=5, is_approved=True)
     Review.objects.create(product=product, user=other_user, rating=1, is_approved=False)
@@ -37,3 +37,20 @@ def test_anonymous_only_sees_approved_reviews(api_client, make_product, user, dj
 
     assert response.status_code == 200
     assert len(response.data) == 1
+
+
+def test_product_rating_annotation_counts_only_approved_reviews(
+    api_client, make_product, user, django_user_model
+):
+    from catalog.models import Review
+
+    other_user = django_user_model.objects.create_user(email="uzivatel_c@example.com", password="heslo123")
+    product = make_product(name="Sluchátka", price="499.00", stock=5)
+    Review.objects.create(product=product, user=user, rating=4, is_approved=True)
+    Review.objects.create(product=product, user=other_user, rating=1, is_approved=False)
+
+    response = api_client.get(f"/api/products/{product.slug}/")
+
+    assert response.status_code == 200
+    assert response.data["avg_rating"] == 4.0
+    assert response.data["review_count"] == 1

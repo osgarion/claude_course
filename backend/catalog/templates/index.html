@@ -20,7 +20,7 @@
       <a href="#">Domů</a>
       <a href="#products">Produkty</a>
       {% if user.is_authenticated %}
-        <span>Ahoj, {{ user.username }}</span>
+        <span>Ahoj, {{ user.email }}</span>
         <a href="{% url 'logout' %}">Odhlásit</a>
       {% else %}
         <a href="{% url 'login' %}">Přihlásit</a>
@@ -57,5 +57,6 @@
   </footer>
 
   <script src="{% static 'catalog/app.js' %}"></script>
+  {% include "chat_widget.html" %}
 </body>
 </html>

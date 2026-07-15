@@ -1,7 +1,53 @@
+import uuid
+from decimal import Decimal
+
 from django.conf import settings
+from django.contrib.auth.base_user import BaseUserManager
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import F
+from django.utils import timezone
 from django.utils.text import slugify
+
+
+class UserManager(BaseUserManager):
+    """Uživatel se přihlašuje e-mailem, username pole neexistuje."""
+
+    use_in_migrations = True
+
+    def _create_user(self, email, password, **extra_fields):
+        if not email:
+            raise ValueError("email is required")
+        user = self.model(email=self.normalize_email(email), **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+        return self._create_user(email, password, **extra_fields)
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        return self._create_user(email, password, **extra_fields)
+
+
+class User(AbstractUser):
+    """Vlastní User model - login přes e-mail, žádný sloupec username."""
+
+    username = None
+    email = models.EmailField(unique=True)
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
+
+    objects = UserManager()
+
+    def __str__(self):
+        return self.email
 
 
 class Category(models.Model):
@@ -82,11 +128,53 @@ class ProductVariant(models.Model):
         return f"{self.product.name} - {self.name}"
 
 
+class Coupon(models.Model):
+    """Slevový kód uplatnitelný na objednávku."""
+
+    DISCOUNT_PERCENT = "percent"
+    DISCOUNT_FIXED = "fixed"
+    DISCOUNT_TYPE_CHOICES = [
+        (DISCOUNT_PERCENT, "Procenta"),
+        (DISCOUNT_FIXED, "Pevná částka"),
+    ]
+
+    code = models.CharField(max_length=40, unique=True)
+    discount_type = models.CharField(max_length=10, choices=DISCOUNT_TYPE_CHOICES)
+    value = models.DecimalField(max_digits=10, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+    valid_from = models.DateTimeField(null=True, blank=True)
+    valid_to = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.code
+
+    def is_valid_now(self):
+        now = timezone.now()
+        if not self.is_active:
+            return False
+        if self.valid_from and now < self.valid_from:
+            return False
+        if self.valid_to and now > self.valid_to:
+            return False
+        return True
+
+    def discount_for(self, subtotal):
+        if self.discount_type == self.DISCOUNT_PERCENT:
+            discount = subtotal * self.value / Decimal("100")
+        else:
+            discount = self.value
+        return min(discount, subtotal).quantize(Decimal("0.01"))
+
+
 class Address(models.Model):
-    """Doručovací adresa uživatele."""
+    """Doručovací adresa uživatele (nebo hosta bez účtu)."""
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="addresses"
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="addresses",
     )
     full_name = models.CharField(max_length=255)
     street = models.CharField(max_length=255)
@@ -114,17 +202,49 @@ class Order(models.Model):
         (STATUS_CANCELLED, "Zrušeno"),
     ]
 
+    # user je nullable kvůli guest checkoutu - hosta identifikuje
+    # guest_token, ne přihlášení (viz IsOwnerOfObject/views).
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="orders"
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="orders",
     )
     shipping_address = models.ForeignKey(
         Address, on_delete=models.PROTECT, related_name="orders"
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    coupon = models.ForeignKey(
+        Coupon, null=True, blank=True, on_delete=models.SET_NULL, related_name="orders"
+    )
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0"))
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    # otevřený Stripe PaymentIntent, znovupoužitý při opakovaných pokusech o platbu
+    payment_intent_id = models.CharField(max_length=64, blank=True, default="")
+    # vygenerován jen pro objednávky bez přihlášení - host se jím prokazuje
+    # při zobrazení/platbě/zrušení své objednávky (viz permissions.py)
+    guest_token = models.UUIDField(null=True, blank=True, unique=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Objednávka #{self.pk}"
+
+    def cancel(self):
+        """Zruší objednávku a vrátí rezervované kusy zpět na sklad."""
+        for item in self.items.select_related("product", "variant"):
+            if item.variant_id:
+                ProductVariant.objects.filter(pk=item.variant_id).update(
+                    stock=F("stock") + item.quantity
+                )
+            else:
+                Product.objects.filter(pk=item.product_id).update(
+                    stock=F("stock") + item.quantity
+                )
+        self.status = self.STATUS_CANCELLED
+        self.save(update_fields=["status", "updated_at"])
 
 
 class OrderItem(models.Model):
@@ -169,6 +289,9 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     method = models.CharField(max_length=20, choices=METHOD_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    # provider rozlišuje fake (dnešní simulace) od stripe (reálná brána)
+    provider = models.CharField(max_length=20, default="fake")
+    transaction_id = models.CharField(max_length=64, blank=True, default="")
     paid_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):

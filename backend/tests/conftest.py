@@ -1,10 +1,18 @@
 from decimal import Decimal
 
 import pytest
-from django.contrib.auth.models import User
+from django.core.cache import cache
 from rest_framework.test import APIClient
 
-from catalog.models import Address, Product
+from catalog.models import Address, Coupon, Product, User
+
+
+@pytest.fixture(autouse=True)
+def _clear_throttle_cache():
+    """Throttle counters žijí v cache - bez resetu by testy ovlivňovaly jeden druhý."""
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.fixture
@@ -14,12 +22,12 @@ def api_client():
 
 @pytest.fixture
 def user(db):
-    return User.objects.create_user("zakaznik", password="heslo123")
+    return User.objects.create_user(email="zakaznik@example.com", password="heslo123")
 
 
 @pytest.fixture
 def staff_user(db):
-    return User.objects.create_user("owner", password="heslo123", is_staff=True)
+    return User.objects.create_user(email="owner@example.com", password="heslo123", is_staff=True)
 
 
 @pytest.fixture
@@ -43,4 +51,13 @@ def make_address(db):
 def make_product(db):
     def _make(name="Produkt", price="100.00", stock=5, **kwargs):
         return Product.objects.create(name=name, price=Decimal(price), stock=stock, **kwargs)
+    return _make
+
+
+@pytest.fixture
+def make_coupon(db):
+    def _make(code="SLEVA10", discount_type=Coupon.DISCOUNT_PERCENT, value="10", **kwargs):
+        return Coupon.objects.create(
+            code=code, discount_type=discount_type, value=Decimal(value), **kwargs
+        )
     return _make

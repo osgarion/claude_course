@@ -7,7 +7,7 @@
   <title>Pokladna — Pixel Pantry</title>
   <link rel="stylesheet" href="{% static 'catalog/styles.css' %}">
 </head>
-<body>
+<body data-user-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
   {% csrf_token %}
 
   <header class="site-header">
@@ -18,7 +18,7 @@
     <nav class="main-nav">
       <a href="/">Zpět do obchodu</a>
       {% if user.is_authenticated %}
-        <span>Ahoj, {{ user.username }}</span>
+        <span>Ahoj, {{ user.email }}</span>
         <a href="{% url 'logout' %}">Odhlásit</a>
       {% else %}
         <a href="{% url 'login' %}">Přihlásit</a>
@@ -36,10 +36,13 @@
 
     <section>
       <h2>Doručovací adresa</h2>
+      <p id="guest-notice" class="guest-notice" hidden>
+        Objednáváš bez přihlášení - vyplň doručovací adresu níže.
+      </p>
       <div id="address-list"></div>
 
-      <form id="new-address-form" class="address-form">
-        <h3>Přidat novou adresu</h3>
+      <form id="address-form" class="address-form">
+        <h3 id="address-form-title">Přidat novou adresu</h3>
         <label for="full_name">Jméno a příjmení</label>
         <input type="text" id="full_name" name="full_name" required>
 
@@ -58,8 +61,17 @@
         <label for="phone">Telefon (nepovinné)</label>
         <input type="text" id="phone" name="phone">
 
-        <button type="submit" class="btn-primary">Uložit adresu</button>
+        <button type="submit" id="save-address-btn" class="btn-primary">Uložit adresu</button>
       </form>
+    </section>
+
+    <section>
+      <h2>Slevový kód</h2>
+      <div class="coupon-row">
+        <input type="text" id="coupon-code" placeholder="Slevový kód (nepovinné)">
+        <button type="button" id="apply-coupon-btn" class="btn-secondary">Uplatnit</button>
+      </div>
+      <p id="coupon-message"></p>
     </section>
 
     <button id="place-order-btn" class="btn-primary">Vytvořit objednávku</button>
@@ -67,5 +79,6 @@
   </main>
 
   <script src="{% static 'catalog/app.js' %}"></script>
+  {% include "chat_widget.html" %}
 </body>
 </html>

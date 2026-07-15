@@ -7,10 +7,17 @@ atd.). Je to standardní soubor, jaký by vygeneroval `django-admin
 startproject`, jen ručně upravený pro naše potřeby.
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # BASE_DIR = cesta ke složce backend/ (o dvě úrovně nad tímto souborem)
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Načte backend/.env, pokud existuje (lokální tajné klíče - Stripe,
+# Sentry). Soubor je gitignored, viz backend/.env.example pro šablonu.
+load_dotenv(BASE_DIR / ".env")
 
 # POZOR: tajný klíč pro lokální vývoj. Před nasazením do produkce se musí
 # nahradit vlastní tajnou hodnotou a NESMÍ se commitovat do veřejného repa.
@@ -30,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework.authtoken",
     "catalog",
 ]
 
@@ -102,3 +110,62 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # (django.contrib.auth.urls) - zpět na hlavní stránku obchodu.
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+# Vlastní User model (login e-mailem, žádné pole username) - musí být
+# nastaveno před první migrací, proto se historie migrací v tomto
+# projektu jednorázově resetovala při zavedení této změny.
+AUTH_USER_MODEL = "catalog.User"
+
+REST_FRAMEWORK = {
+    # Frontend servírovaný přes Django dál používá SessionAuthentication
+    # (cookie + CSRF token) - TokenAuthentication je navíc jen pro
+    # budoucí API-only klienty, current frontend ji nepoužívá.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/min",
+        "user": "120/min",
+        # sdílený rozpočet pro login+register - ochrana proti brute-force
+        "auth": "10/min",
+        # každé volání chatbota stojí peníze (Anthropic API) - přísnější limit
+        "chat": "20/min",
+    },
+}
+
+# Platby (Stripe)
+# Tajný klíč žije jen v backend/.env (gitignored), nikdy ne natvrdo tady.
+# Bez klíče pay endpoint spadne zpět na okamžitou "fake" platbu.
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_CURRENCY = os.environ.get("STRIPE_CURRENCY", "czk")
+
+# Sledování chyb (Sentry) - DSN jen v backend/.env, prázdné = vypnuto.
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+
+# Zákaznický chatbot (Claude Haiku přes Anthropic API) - klíč jen v
+# backend/.env, nikdy ne natvrdo tady. Bez klíče /api/chat/ vrátí 503.
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
+if "PYTEST_VERSION" in os.environ:
+    # testy vždy běží proti fake platební bráně, bez reportování do Sentry
+    # a bez reálného volání Anthropic API (chatbot testy Anthropic mockují)
+    STRIPE_SECRET_KEY = ""
+    STRIPE_WEBHOOK_SECRET = ""
+    SENTRY_DSN = ""
+    ANTHROPIC_API_KEY = ""
+
+if SENTRY_DSN:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment="development" if DEBUG else "production",
+        traces_sample_rate=1.0,
+    )

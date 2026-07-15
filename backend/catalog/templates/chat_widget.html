@@ -1,0 +1,16 @@
+{% load static %}
+<div id="chat-widget">
+  <button id="chat-toggle" type="button" aria-label="Otevřít podporu">💬</button>
+  <div id="chat-panel">
+    <div id="chat-header">
+      <span>Zákaznická podpora</span>
+      <button id="chat-close" type="button" aria-label="Zavřít">×</button>
+    </div>
+    <div id="chat-messages"></div>
+    <form id="chat-form">
+      <input type="text" id="chat-input" placeholder="Zeptej se na objednávku, produkty…" autocomplete="off">
+      <button type="submit" class="btn-primary">Odeslat</button>
+    </form>
+  </div>
+</div>
+<script src="{% static 'catalog/chat.js' %}"></script>
