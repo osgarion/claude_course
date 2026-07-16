@@ -1,0 +1,31 @@
+name: CI
+
+# Testovací stupeň. Běží na každé PR i na push do main a nepotřebuje žádné
+# Cloudflare klíče: vitest spouští Worker v lokálním workerd. Filtr `workers/**`
+# hlídá, aby změny jen v Django `backend/` tenhle běh nespouštěly (repo má dvě
+# implementace, viz CLAUDE.md).
+on:
+  pull_request:
+    paths: ["workers/**", ".github/workflows/ci.yml"]
+  push:
+    branches: [main]
+    paths: ["workers/**", ".github/workflows/ci.yml"]
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: workers
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: workers/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test

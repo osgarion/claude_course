@@ -197,6 +197,15 @@ Nejdůležitější věci, které jinde nezjistíš:
   workerdy padaly — a vitest pak hlásil suitu **zeleně**, protože testy ze
   spadlých souborů zmizely z počtu. Když se objeví `ECONNRESET` z poolu,
   kontrolovat počet testů, ne jen barvu.
+- **CI/CD** (GitHub Actions, štíhlá dvoustupňová varianta — detaily
+  `workers/cicd.md`): workflowy jsou v **kořeni repa** (`.github/workflows/`, ne
+  ve `workers/`), s `working-directory: workers` a path-filtrem `workers/**`,
+  aby změny v Django `backend/` deploy Workeru nespouštěly. `ci.yml` = typecheck
+  + testy na PR (bez cloud klíčů). `deploy-prod.yml` = na push do `main` testy →
+  `d1 migrations apply` → `wrangler deploy` → smoke test. Vyžaduje GitHub secrety
+  `CLOUDFLARE_API_TOKEN` (human musí vytvořit, Workers OAuth to neumí) a
+  `CLOUDFLARE_ACCOUNT_ID`; bez nich CI prochází a jen deploy spadne na wrangleru.
+  Dev tier (oddělená D1) vědomě neřešen.
 - **Sentry** (`src/sentry.ts`, `@sentry/cloudflare`): `withSentry(app)` obaluje
   export ve `src/index.ts`, feature-gated přes `SENTRY_DSN` (prázdné = no-op,
   stejný fail-safe vzor jako `ANTHROPIC_API_KEY`/`STRIPE_SECRET_KEY`). Do

@@ -1,0 +1,57 @@
+name: Deploy prod
+
+# Push do main = nasazení produkce: testy -> migrace D1 -> deploy -> smoke test.
+# Kroky joby jsou sekvenční a při chybě se přeruší, takže červené testy se
+# k deploy krokům nikdy nedostanou (nešipujeme rozbitý build).
+#
+# Potřebuje dva GitHub secrety:
+#   CLOUDFLARE_API_TOKEN  - human musí vytvořit (viz workers/cicd.md, Zbývá).
+#   CLOUDFLARE_ACCOUNT_ID - nastaveno.
+# Bez tokenu projdou testy i migrace-krok spadne až na wrangleru.
+on:
+  push:
+    branches: [main]
+    paths: ["workers/**", ".github/workflows/deploy-prod.yml"]
+  workflow_dispatch:
+
+# Dvě nasazení najednou by si šláplo do migrací/deploye - radši je serializuj.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: workers
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: workers/package-lock.json
+      - run: npm ci
+
+      # Testy první, ve stejné jobě - červený build se k deployi nedostane.
+      - run: npm run typecheck
+      - run: npm test
+
+      # Migrace běží PŘED nasazením nového kódu. U aditivních změn v pohodě;
+      # u destruktivních jeď expand-then-contract přes dva deploye.
+      - name: Apply D1 migrations (prod)
+        run: npx wrangler d1 migrations apply pixel-pantry --remote
+
+      - name: Deploy (prod)
+        run: npx wrangler deploy
+
+      - name: Smoke test
+        run: |
+          curl -fsS https://pixel-pantry.pixel-pantry-course.workers.dev/api/products \
+            | grep -q '"slug"'
