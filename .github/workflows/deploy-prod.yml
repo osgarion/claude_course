@@ -11,7 +11,8 @@ name: Deploy prod
 on:
   push:
     branches: [main]
-    paths: ["workers/**", ".github/workflows/deploy-prod.yml"]
+    # Jen změny v kódu Workeru nasazují; čistě dokumentační (*.md) ne.
+    paths: ["workers/**", "!workers/**/*.md", ".github/workflows/deploy-prod.yml"]
   workflow_dispatch:
 
 # Dvě nasazení najednou by si šláplo do migrací/deploye - radši je serializuj.
