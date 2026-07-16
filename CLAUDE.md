@@ -14,11 +14,11 @@ formou úkolů z kurzu, které mu bude postupně zadávat.
 ## Nástroje a účty
 
 - GitHub: k dispozici pro verzování a případné PR workflow.
-- Cloudflare: k dispozici pro nasazení (Pages/Workers) — použít až to bude
-  v rámci úkolů z kurzu potřeba. Pro nasazení tohoto e-shopu je záměr
-  Workers (rychlé API) + D1 (Cloudflare SQL databáze) na free tier —
-  detaily/postup viz až se k nasazení skutečně dostaneme (aktuální
-  Django+SQLite backend poběží dál lokálně, D1 je pro cloud verzi).
+- Cloudflare: **e-shop je nasazený** (Workers + D1, free tier):
+  <https://pixel-pantry.pixel-pantry-course.workers.dev>. Průběžné nasazování
+  přes CI/CD (push do `main`, viz sekce CI/CD níž); ruční deploy `wrangler
+  deploy`. Django+SQLite backend zůstává lokální reference. Detaily nasazení
+  a povýšení na staff viz `workers/README.md`.
 - Anthropic API: `ANTHROPIC_API_KEY` pohání chatbota (viz níže) — klíč
   jen v `backend/.env` (Django) a `workers/.dev.vars` (Workers, lokálně) /
   `wrangler secret put ANTHROPIC_API_KEY` (Workers, produkce). Nikdy v kódu
@@ -44,9 +44,14 @@ formou úkolů z kurzu, které mu bude postupně zadávat.
 
 ## Cloudflare Workers + D1 (`workers/`)
 
-Nasazení: free tier, `*.workers.dev` subdoména. **Jeden Worker servíruje
+Nasazení: free tier, produkce na
+<https://pixel-pantry.pixel-pantry-course.workers.dev>. **Jeden Worker servíruje
 API i statický frontend** (`assets` binding + `run_worker_first` na
 `/api/*`), takže stejný origin a žádné CORS — stejný princip jako u Djanga.
+Produkční D1 se v průběhu jednou přestavěla na čerstvou databázi (`9b51822d…`)
+poté, co se původní (`2236b0cc…`) na straně Cloudflare zasekla na `D1_ERROR`
+u všech dotazů — postup přestavby (create → migrace → seed → deploy) je
+v `workers/README.md`.
 
 Nejdůležitější věci, které jinde nezjistíš:
 
@@ -208,8 +213,12 @@ Nejdůležitější věci, které jinde nezjistíš:
   Dev tier (oddělená D1) vědomě neřešen.
 - **Sentry** (`src/sentry.ts`, `@sentry/cloudflare`): `withSentry(app)` obaluje
   export ve `src/index.ts`, feature-gated přes `SENTRY_DSN` (nenastavené =
-  `undefined` = no-op). Do `app.onError` přidán `Sentry.captureException(error)`
-  jen pro neočekávané (ne-HTTP) chyby a jen když je DSN nastavené.
+  `undefined` = no-op; v produkci nastavené = Sentry aktivní). Do `app.onError`
+  přidán `Sentry.captureException(error)` jen pro neočekávané (ne-HTTP) chyby a
+  jen když je DSN nastavené. `onError` zároveň loguje **celý popis** chyby
+  (metoda, cesta, název, zpráva, stack) přes `console.error` — jde to do
+  Cloudflare Workers Logs (`observability.enabled`) i do Sentry, takže chyba je
+  dohledatelná i bez reprodukce.
   **POZOR — secrety vs. vars (naučeno tvrdě):** `SENTRY_DSN` se **NEdeklaruje**
   ve `wrangler.jsonc` `vars`. Cloudflare nedovolí var a secret stejného jména
   (`code 10053`), takže dokud je klíč ve `vars`, `wrangler secret put` selže na
@@ -223,7 +232,9 @@ Nejdůležitější věci, které jinde nezjistíš:
 - **Etapa 2 — zbývá už jen R2 upload obrázků souborů** (URL-based obrázky ✅,
   viz admin výš). Hotové: chatbot ✅, Stripe backend ✅, admin rozhraní ✅
   (vč. správy uživatelů, obrázků, filtrů/hromadného odeslání objednávek),
-  Sentry ✅. Stripe Elements frontend zůstává vědomě odložený.
+  Sentry ✅ (zapnuté v produkci — secret `SENTRY_DSN`, projekt v Sentru EU),
+  **nasazení na Cloudflare ✅** a **CI/CD ✅** (viz sekce výš). Stripe Elements
+  frontend zůstává vědomě odložený.
 
 ## Architektura a konvence backendu (Django — ZMRAZENO, jen reference)
 
