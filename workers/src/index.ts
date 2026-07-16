@@ -63,10 +63,17 @@ app.onError((error, c) => {
   if (error instanceof HTTPException) {
     return c.json({ detail: error.message }, error.status);
   }
-  // Jen neočekávané (ne-HTTP) chyby jdou do Sentry, a jen když je DSN
-  // nastavené (prázdné = no-op, stejný fail-safe jako chatbot/Stripe).
+  // Neočekávaná (ne-HTTP) chyba: zaznamenej CELÝ popis - metoda, cesta, jméno,
+  // zpráva a stack trace. Jde to do Workers Logs (observability.enabled ve
+  // wrangler.jsonc, dohledatelné v dashboardu) i do Sentry, když je DSN
+  // nastavené (prázdné = no-op, stejný fail-safe jako chatbot/Stripe). Sentry
+  // navíc drží celý kontext requestu trvale a prohledávatelně.
+  const err = error instanceof Error ? error : new Error(String(error));
+  console.error(
+    `Neošetřená chyba: ${c.req.method} ${new URL(c.req.url).pathname}\n` +
+      `${err.name}: ${err.message}\n${err.stack ?? "(stack není k dispozici)"}`,
+  );
   if (c.env.SENTRY_DSN) Sentry.captureException(error);
-  console.error("Neošetřená chyba:", error);
   return c.json({ detail: "Něco se pokazilo." }, 500);
 });
 
