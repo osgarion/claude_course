@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokladna — Pixel Pantry</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="/" class="logo-emoji">🕹️</a>
+      <span class="logo-text">Pixel Pantry</span>
+    </div>
+    <nav class="main-nav">
+      <a href="/">Zpět do obchodu</a>
+      <span id="nav-auth"></span>
+    </nav>
+  </header>
+
+  <main class="checkout-page">
+    <h1>Pokladna</h1>
+
+    <section>
+      <h2>Košík</h2>
+      <div id="checkout-summary"></div>
+    </section>
+
+    <section>
+      <h2>Doručovací adresa</h2>
+      <p id="guest-notice" class="guest-notice" hidden>
+        Objednáváš bez přihlášení - vyplň doručovací adresu níže.
+      </p>
+      <div id="address-list"></div>
+
+      <form id="address-form" class="address-form">
+        <h3 id="address-form-title">Přidat novou adresu</h3>
+        <label for="full_name">Jméno a příjmení</label>
+        <input type="text" id="full_name" name="full_name" required>
+
+        <label for="street">Ulice a číslo</label>
+        <input type="text" id="street" name="street" required>
+
+        <label for="city">Město</label>
+        <input type="text" id="city" name="city" required>
+
+        <label for="postal_code">PSČ</label>
+        <input type="text" id="postal_code" name="postal_code" required>
+
+        <label for="country">Země</label>
+        <input type="text" id="country" name="country" required>
+
+        <label for="phone">Telefon (nepovinné)</label>
+        <input type="text" id="phone" name="phone">
+
+        <button type="submit" id="save-address-btn" class="btn-primary">Uložit adresu</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Slevový kód</h2>
+      <div class="coupon-row">
+        <input type="text" id="coupon-code" placeholder="Slevový kód (nepovinné)">
+        <button type="button" id="apply-coupon-btn" class="btn-secondary">Uplatnit</button>
+      </div>
+      <p id="coupon-message"></p>
+    </section>
+
+    <button id="place-order-btn" class="btn-primary">Vytvořit objednávku</button>
+    <p id="checkout-message"></p>
+  </main>
+
+  <script src="/static/auth.js"></script>
+  <script src="/static/app.js"></script>
+  <script src="/static/chat.js"></script>
+</body>
+</html>

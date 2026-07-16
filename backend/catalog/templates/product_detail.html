@@ -21,7 +21,7 @@
     <nav class="main-nav">
       <a href="/">Zpět do obchodu</a>
       {% if user.is_authenticated %}
-        <span>Ahoj, {{ user.username }}</span>
+        <span>Ahoj, {{ user.email }}</span>
         <a href="{% url 'logout' %}">Odhlásit</a>
       {% else %}
         <a href="{% url 'login' %}">Přihlásit</a>
@@ -38,5 +38,6 @@
   </main>
 
   <script src="{% static 'catalog/app.js' %}"></script>
+  {% include "chat_widget.html" %}
 </body>
 </html>

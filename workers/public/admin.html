@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrace — Pixel Pantry</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="/" class="logo-emoji">🕹️</a>
+      <span class="logo-text">Pixel Pantry</span>
+    </div>
+    <nav class="main-nav">
+      <a href="/">Zpět do obchodu</a>
+      <span id="nav-auth"></span>
+    </nav>
+  </header>
+
+  <main class="admin-page">
+    <h1>Administrace</h1>
+
+    <p id="admin-denied" hidden>Přístup jen pro provozovatele obchodu.</p>
+
+    <div id="admin-content" hidden>
+      <section>
+        <h2>Uživatelé</h2>
+        <form id="user-search-form" class="admin-form-inline">
+          <input type="text" id="user-search" placeholder="Hledat podle e-mailu nebo jména…">
+          <button type="submit" class="btn-secondary">Hledat</button>
+        </form>
+        <table class="admin-table">
+          <thead><tr><th>E-mail</th><th>Jméno</th><th>Provozovatel</th><th>Aktivní</th></tr></thead>
+          <tbody id="user-rows"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Produkty</h2>
+        <form id="product-form" class="admin-form">
+          <input type="hidden" id="product-id">
+          <label for="product-name">Název</label>
+          <input type="text" id="product-name" required>
+
+          <label for="product-category">Kategorie</label>
+          <select id="product-category"><option value="">— bez kategorie —</option></select>
+
+          <label for="product-price">Cena (Kč)</label>
+          <input type="text" id="product-price" required>
+
+          <label for="product-stock">Sklad</label>
+          <input type="number" id="product-stock" min="0" required>
+
+          <label for="product-description">Popis</label>
+          <textarea id="product-description"></textarea>
+
+          <label><input type="checkbox" id="product-active" checked> Aktivní (viditelný v katalogu)</label>
+
+          <div class="admin-form-actions">
+            <button type="submit" class="btn-primary" id="product-submit-btn">Založit produkt</button>
+            <button type="button" class="btn-secondary" id="product-cancel-btn" hidden>Zrušit úpravu</button>
+          </div>
+        </form>
+        <p id="product-message" class="form-error"></p>
+
+        <div id="product-images-section" hidden>
+          <h3>Obrázky produktu</h3>
+          <table class="admin-table">
+            <thead><tr><th>Obrázek</th><th>Alt text</th><th>Primární</th><th></th></tr></thead>
+            <tbody id="product-image-rows"></tbody>
+          </table>
+          <form id="product-image-form" class="admin-form-inline">
+            <input type="url" id="image-url" placeholder="URL obrázku" required>
+            <input type="text" id="image-alt" placeholder="Alt text (nepovinné)">
+            <label><input type="checkbox" id="image-primary"> Primární</label>
+            <button type="submit" class="btn-secondary">Přidat obrázek</button>
+          </form>
+          <p id="image-message" class="form-error"></p>
+        </div>
+
+        <table class="admin-table">
+          <thead><tr><th>Název</th><th>Cena</th><th>Sklad</th><th>Aktivní</th><th></th></tr></thead>
+          <tbody id="product-rows"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Kupóny</h2>
+        <form id="coupon-form" class="admin-form">
+          <input type="hidden" id="coupon-id">
+          <label for="coupon-code">Kód</label>
+          <input type="text" id="coupon-code" required>
+
+          <label for="coupon-type">Typ slevy</label>
+          <select id="coupon-type">
+            <option value="percent">Procenta</option>
+            <option value="fixed">Pevná částka (Kč)</option>
+          </select>
+
+          <label for="coupon-value">Hodnota</label>
+          <input type="text" id="coupon-value" required>
+
+          <label><input type="checkbox" id="coupon-active" checked> Aktivní</label>
+
+          <div class="admin-form-actions">
+            <button type="submit" class="btn-primary" id="coupon-submit-btn">Založit kupón</button>
+            <button type="button" class="btn-secondary" id="coupon-cancel-btn" hidden>Zrušit úpravu</button>
+          </div>
+        </form>
+        <p id="coupon-message" class="form-error"></p>
+        <table class="admin-table">
+          <thead><tr><th>Kód</th><th>Typ</th><th>Hodnota</th><th>Aktivní</th><th></th></tr></thead>
+          <tbody id="coupon-rows"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Objednávky</h2>
+        <form id="order-filter-form" class="admin-form-inline">
+          <select id="order-status-filter">
+            <option value="">— všechny stavy —</option>
+            <option value="pending">pending</option>
+            <option value="paid">paid</option>
+            <option value="shipped">shipped</option>
+            <option value="cancelled">cancelled</option>
+          </select>
+          <input type="text" id="order-search" placeholder="Hledat podle e-mailu…">
+          <button type="submit" class="btn-secondary">Filtrovat</button>
+          <button type="button" class="btn-secondary" id="order-bulk-ship-btn">Odeslat vybrané</button>
+        </form>
+        <table class="admin-table">
+          <thead><tr><th></th><th>Zákazník</th><th>Stav</th><th>Celkem</th><th>Vytvořeno</th><th></th></tr></thead>
+          <tbody id="order-rows"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Recenze čekající na schválení</h2>
+        <table class="admin-table">
+          <thead><tr><th>Autor</th><th>Hodnocení</th><th>Komentář</th><th></th></tr></thead>
+          <tbody id="review-rows"></tbody>
+        </table>
+        <p id="review-empty" hidden>Žádné recenze ke schválení.</p>
+      </section>
+    </div>
+  </main>
+
+  <script src="/static/auth.js"></script>
+  <script src="/static/app.js"></script>
+  <script src="/static/admin.js"></script>
+</body>
+</html>

@@ -6,7 +6,8 @@ TESTS_DIR = Path(__file__).resolve().parents[1]
 UNIT_DIR = TESTS_DIR / "unit"
 
 DB_FIXTURES = {"db", "transactional_db", "django_db_setup", "make_product",
-               "make_address", "user", "staff_user", "auth_client", "django_user_model"}
+               "make_address", "make_coupon", "user", "staff_user", "auth_client",
+               "django_user_model"}
 
 
 def test_unit_tests_stay_off_the_database():

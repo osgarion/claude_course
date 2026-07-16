@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Pantry — retro obchod</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="logo">
+      <span class="logo-emoji">🕹️</span>
+      <span class="logo-text">Pixel Pantry</span>
+    </div>
+    <nav class="main-nav">
+      <a href="/">Domů</a>
+      <a href="#products">Produkty</a>
+      <!-- vyplní auth.js podle tokenu v localStorage (server o přihlášení neví) -->
+      <span id="nav-auth"></span>
+    </nav>
+    <a href="/pokladna" class="cart">
+      <span class="cart-emoji">🛒</span>
+      <span id="cart-count">0</span>
+    </a>
+  </header>
+
+  <section class="hero">
+    <h1>Retro styl pro tvůj digitální i reálný svět</h1>
+    <p>Pixel art hrnky, samolepky a plakáty — ručně vybrané pro nostalgiky.</p>
+    <a href="#products" class="btn-primary">Prohlédnout produkty</a>
+  </section>
+
+  <section id="products" class="products-section">
+    <h2>Naše produkty</h2>
+    <div class="product-grid" id="product-grid">
+      <p class="loading-message">Načítám produkty…</p>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p>&copy; 2026 Pixel Pantry. Všechna práva vyhrazena.</p>
+    <div class="footer-links">
+      <a href="#">Obchodní podmínky</a>
+      <a href="#">Kontakt</a>
+    </div>
+  </footer>
+
+  <script src="/static/auth.js"></script>
+  <script src="/static/app.js"></script>
+  <script src="/static/chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Přihlášení — Pixel Pantry</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="/" class="logo-emoji">🕹️</a>
+      <span class="logo-text">Pixel Pantry</span>
+    </div>
+    <nav class="main-nav">
+      <a href="/">Zpět do obchodu</a>
+    </nav>
+  </header>
+
+  <section class="auth-section">
+    <h1>Přihlášení</h1>
+    <p class="form-error" id="login-error" hidden></p>
+
+    <form id="login-form" class="auth-form">
+      <label for="login-email">E-mail</label>
+      <input type="email" id="login-email" required autocomplete="email">
+
+      <label for="login-password">Heslo</label>
+      <input type="password" id="login-password" required autocomplete="current-password">
+
+      <button type="submit" class="btn-primary">Přihlásit se</button>
+    </form>
+
+    <h2>Nemáš účet?</h2>
+    <p class="form-error" id="register-error" hidden></p>
+
+    <form id="register-form" class="auth-form">
+      <label for="register-email">E-mail</label>
+      <input type="email" id="register-email" required autocomplete="email">
+
+      <label for="register-password">Heslo (aspoň 8 znaků)</label>
+      <input type="password" id="register-password" required autocomplete="new-password">
+
+      <button type="submit" class="btn-secondary">Zaregistrovat se</button>
+    </form>
+  </section>
+
+  <script src="/static/auth.js"></script>
+  <script src="/static/app.js"></script>
+  <script>
+    // Django auth views zmizely - přihlášení i registrace jdou přes API
+    // a výsledný token se uloží do localStorage.
+    function showError(id, error) {
+      const el = document.getElementById(id);
+      const message =
+        error?.detail ||
+        (error?.email && error.email[0]) ||
+        (error?.password && error.password[0]) ||
+        "Něco se pokazilo.";
+      el.textContent = message;
+      el.hidden = false;
+    }
+
+    function submitAuth(event, endpoint, emailId, passwordId, errorId) {
+      event.preventDefault();
+      document.getElementById(errorId).hidden = true;
+
+      fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: document.getElementById(emailId).value,
+          password: document.getElementById(passwordId).value,
+        }),
+      })
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) throw data;
+          setAuth(data.token, data.user);
+          window.location.href = "/";
+        })
+        .catch((error) => showError(errorId, error));
+    }
+
+    document.getElementById("login-form").addEventListener("submit", (event) =>
+      submitAuth(event, "/api/auth/login", "login-email", "login-password", "login-error"),
+    );
+    document.getElementById("register-form").addEventListener("submit", (event) =>
+      submitAuth(event, "/api/auth/register", "register-email", "register-password", "register-error"),
+    );
+  </script>
+</body>
+</html>
