@@ -27,5 +27,9 @@ jobs:
           cache: npm
           cache-dependency-path: workers/package-lock.json
       - run: npm ci
+      # worker-configuration.d.ts je generovaný (gitignored), takže v čistém
+      # checkoutu chybí a tsconfig `types` ho vyžaduje - vygeneruj z wrangler.jsonc
+      # (offline, bez cloud klíčů), jinak typecheck spadne na TS2688.
+      - run: npx wrangler types
       - run: npm run typecheck
       - run: npm test

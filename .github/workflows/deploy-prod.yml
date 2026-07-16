@@ -39,6 +39,11 @@ jobs:
           cache-dependency-path: workers/package-lock.json
       - run: npm ci
 
+      # worker-configuration.d.ts je generovaný (gitignored) - vygeneruj z
+      # wrangler.jsonc (offline), jinak typecheck spadne na TS2688 (chybí soubor
+      # v types). Viz ci.yml.
+      - run: npx wrangler types
+
       # Testy první, ve stejné jobě - červený build se k deployi nedostane.
       - run: npm run typecheck
       - run: npm test
