@@ -27,7 +27,7 @@
     {
       "binding": "DB",
       "database_name": "pixel-pantry",
-      "database_id": "2236b0cc-4bc8-46ba-abcf-a4215e7f7933",
+      "database_id": "9b51822d-1632-468b-98d0-d93068badc3f",
       "migrations_dir": "migrations"
     }
   ],
