@@ -207,12 +207,19 @@ Nejdůležitější věci, které jinde nezjistíš:
   `CLOUDFLARE_ACCOUNT_ID`; bez nich CI prochází a jen deploy spadne na wrangleru.
   Dev tier (oddělená D1) vědomě neřešen.
 - **Sentry** (`src/sentry.ts`, `@sentry/cloudflare`): `withSentry(app)` obaluje
-  export ve `src/index.ts`, feature-gated přes `SENTRY_DSN` (prázdné = no-op,
-  stejný fail-safe vzor jako `ANTHROPIC_API_KEY`/`STRIPE_SECRET_KEY`). Do
-  `app.onError` přidán `Sentry.captureException(error)` jen pro neočekávané
-  (ne-HTTP) chyby a jen když je DSN nastavené. DSN nikdy natvrdo — `wrangler.jsonc`
-  `vars` má prázdnou deklaraci, skutečná hodnota přes `.dev.vars` (lokálně) /
-  `wrangler secret put SENTRY_DSN` (produkce).
+  export ve `src/index.ts`, feature-gated přes `SENTRY_DSN` (nenastavené =
+  `undefined` = no-op). Do `app.onError` přidán `Sentry.captureException(error)`
+  jen pro neočekávané (ne-HTTP) chyby a jen když je DSN nastavené.
+  **POZOR — secrety vs. vars (naučeno tvrdě):** `SENTRY_DSN` se **NEdeklaruje**
+  ve `wrangler.jsonc` `vars`. Cloudflare nedovolí var a secret stejného jména
+  (`code 10053`), takže dokud je klíč ve `vars`, `wrangler secret put` selže na
+  kolizi. DSN proto žije **jen jako secret** (`wrangler secret put SENTRY_DSN` /
+  lokálně `.dev.vars`) a jeho **typ je ručně v `src/types.ts`** (`Bindings =
+  Cloudflare.Env & { SENTRY_DSN?: string }`), protože `wrangler types` ho už
+  z configu nevygeneruje. Ostatní klíče (`ANTHROPIC_API_KEY`, `STRIPE_*`) jsou
+  zatím ještě prázdné vary — **fungují jako no-op, ale zapnout je jako secret
+  půjde až po jejich odebrání z `vars` a přidání do `Bindings`** (dřívější
+  poznámka „secret přebije var" byla mylná).
 - **Etapa 2 — zbývá už jen R2 upload obrázků souborů** (URL-based obrázky ✅,
   viz admin výš). Hotové: chatbot ✅, Stripe backend ✅, admin rozhraní ✅
   (vč. správy uživatelů, obrázků, filtrů/hromadného odeslání objednávek),

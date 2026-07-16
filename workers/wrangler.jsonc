@@ -59,7 +59,10 @@
     // Je to jen deklarace, aby typ Env existoval i po čerstvém checkoutu.
     // Skutečná hodnota se dodává mimo git:
     //   lokálně   -> workers/.dev.vars (gitignorovaný, šablona .dev.vars.example)
-    //   produkce  -> npx wrangler secret put ANTHROPIC_API_KEY  (secret přebije var)
+    //   produkce  -> nejdřív odeber klíč z těchhle `vars` (jinak Cloudflare
+    //                odmítne secret stejného jména na kolizi), pak
+    //                `npx wrangler secret put ANTHROPIC_API_KEY` a typuj
+    //                v src/types.ts (Bindings) - přesně jako SENTRY_DSN níž.
     // Prázdná hodnota = chat vrací 503, zbytek e-shopu jede dál.
     "ANTHROPIC_API_KEY": "",
 
@@ -71,12 +74,14 @@
     "STRIPE_SECRET_KEY": "",
     "STRIPE_PUBLISHABLE_KEY": "",
     "STRIPE_WEBHOOK_SECRET": "",
-    "STRIPE_CURRENCY": "czk",
+    "STRIPE_CURRENCY": "czk"
 
-    // Stejný vzor jako klíče výš - prázdné v gitu, skutečné DSN přes .dev.vars
-    // (lokálně) / wrangler secret put (produkce). Prázdné = Sentry vypnuté
-    // (enabled:false v src/sentry.ts), reportování chyb se prostě neděje.
-    "SENTRY_DSN": ""
+    // POZOR: SENTRY_DSN se tu (na rozdíl od klíčů výš) ZÁMĚRNĚ NEdeklaruje.
+    // Cloudflare nedovolí var a secret stejného jména - dokud by byl klíč ve
+    // `vars`, `wrangler secret put SENTRY_DSN` spadne na kolizi (code 10053).
+    // DSN proto žije jen jako secret; jeho typ je ručně v src/types.ts
+    // (Bindings). Repo je veřejné, takže DSN nesmí do gitu ani jako "prázdný
+    // var". Bez nastaveného secretu je env.SENTRY_DSN undefined = Sentry vypnuté.
   },
 
   "observability": { "enabled": true }

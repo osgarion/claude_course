@@ -17,4 +17,16 @@ export interface Variables {
   user: AuthUser | null;
 }
 
-export type AppEnv = { Bindings: Cloudflare.Env; Variables: Variables };
+/**
+ * Cloudflare.Env generuje `wrangler types` z wrangler.jsonc. Tajné hodnoty
+ * (secrety) se tam ale ZÁMĚRNĚ nedeklarují jako var - Cloudflare nedovolí var
+ * a secret stejného jména - takže je do typu doplňujeme ručně. Volitelné,
+ * protože bez nastaveného secretu jsou undefined a fail-safe větve to čekají
+ * (prázdné = feature vypnutá). Zatím jen SENTRY_DSN; ostatní klíče jsou dnes
+ * ještě prázdné vary ve wrangler.jsonc (přijdou sem, až se zapnou jako secret).
+ */
+export type Bindings = Cloudflare.Env & {
+  readonly SENTRY_DSN?: string;
+};
+
+export type AppEnv = { Bindings: Bindings; Variables: Variables };
