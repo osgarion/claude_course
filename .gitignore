@@ -5,9 +5,9 @@ __pycache__/
 venv/
 
 # Django
-backend/db.sqlite3
-backend/media/
-backend/.env
+pixel-pantry/backend/db.sqlite3
+pixel-pantry/backend/media/
+pixel-pantry/backend/.env
 
 # OS
 .DS_Store

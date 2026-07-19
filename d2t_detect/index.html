@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D2T teaching classifier</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>D2T teaching classifier</h1>
+      <p class="sub">Established D2T RA vs. remission — augmented Firth logistic model</p>
+    </header>
+
+    <div class="disclaimer" role="note">
+      <strong>Teaching only.</strong> This is a cross-sectional class probability, <em>not</em> a
+      prospective D2T risk and <em>not</em> for clinical decisions.
+    </div>
+
+    <form id="form" novalidate>
+      <div class="fields" id="fields"><!-- inputs injected from input_schema --></div>
+      <p class="hint">Leave a field blank to use its training median (shown as placeholder).</p>
+      <div class="actions">
+        <button type="submit" class="primary">Compute</button>
+        <button type="reset" class="ghost">Clear</button>
+      </div>
+    </form>
+
+    <section id="result" class="result" hidden aria-live="polite">
+      <div class="gauge">
+        <div class="pct" id="pct">—</div>
+        <div class="pct-label">teaching D2T-class probability</div>
+      </div>
+      <div class="detail">
+        <p><span class="k">Predicted class</span><span id="klass" class="v">—</span></p>
+        <p><span class="k">p(remission)</span><span id="prem" class="v">—</span></p>
+        <p id="imputed-line" hidden><span class="k">Imputed (blank → median)</span><span id="imputed" class="v"></span></p>
+        <p id="range-line" hidden class="warn"><span class="k">Outside training range</span><span id="oor" class="v"></span></p>
+      </div>
+    </section>
+
+    <footer>
+      <div id="selftest" class="selftest" title="Runs the synthetic test cases against .pred_d2t">
+        self-test: <span id="st-status">running…</span>
+      </div>
+      <div id="model-meta" class="meta"></div>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

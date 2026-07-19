@@ -6,15 +6,15 @@ name: CI
 # implementace, viz CLAUDE.md).
 on:
   pull_request:
-    paths: ["workers/**", ".github/workflows/ci.yml"]
+    paths: ["pixel-pantry/workers/**", ".github/workflows/ci.yml"]
   push:
     branches: [main]
-    paths: ["workers/**", ".github/workflows/ci.yml"]
+    paths: ["pixel-pantry/workers/**", ".github/workflows/ci.yml"]
   workflow_dispatch:
 
 defaults:
   run:
-    working-directory: workers
+    working-directory: pixel-pantry/workers
 
 jobs:
   test:
@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: workers/package-lock.json
+          cache-dependency-path: pixel-pantry/workers/package-lock.json
       - run: npm ci
       # worker-configuration.d.ts je generovaný (gitignored), takže v čistém
       # checkoutu chybí a tsconfig `types` ho vyžaduje - vygeneruj z wrangler.jsonc
