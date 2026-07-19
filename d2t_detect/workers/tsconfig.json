@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2022"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    // Typy bindingů generuje `npx wrangler types` z wrangler.jsonc do
+    // worker-configuration.d.ts - po každé změně bindingů znovu spustit.
+    // node types are for the test file (fs/url); the Worker bundle itself never
+    // pulls them in — worker-configuration.d.ts supplies the runtime globals.
+    "types": ["./worker-configuration.d.ts", "node"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"]
+}

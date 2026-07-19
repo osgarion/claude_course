@@ -11,12 +11,21 @@ Obecný kontext uživatele a přehled ostatních projektů viz kořenový `../CL
 
 - **Frontend**: statické HTML/JS/CSS, bez build stepu a bez závislostí — stačí
   otevřít `index.html` (`index.html` + `app.js` + `styles.css`).
-- **Backend** (`r-backend/`): R plumber REST API čtoucí přímo `.rds` bundle
+- **R reference** (`r-backend/`): R plumber REST API čtoucí přímo `.rds` bundle
   (`readRDS`). Čistá logika v `R/predict.R`, HTTP vrstva v `plumber.R`, spouštění
   `run.R` (port 8138), deployment gate `selftest.R` (běží i bez serveru).
-  Endpointy: `/health`, `/schema`, `/predict`, `/selftest`. Frontend a backend
-  jsou dvě nezávislé implementace téhož modelu (JSON vs. RDS) — musí dávat
-  shodné výsledky.
+  Endpointy: `/health`, `/schema`, `/predict`, `/selftest`. **Zůstává zdrojem
+  pravdy modelu** (re-exportuje bundle); na Cloudflare se NEnasazuje (R tam
+  neběží).
+- **Deployable** (`workers/`): Cloudflare Worker (Hono + D1, TypeScript) —
+  stejný stack jako pixel-pantry. Servíruje frontend (`public/`) + API na
+  `/api/*`, login (PBKDF2 + token, převzato z pixel-pantry) a per-user ukládání
+  hodnocení do D1. Model math v `src/model.ts` (port z `predict.R`, čte bundle
+  JSON); parita s R/JS hlídaná `tests/model.test.ts` (tolerance `1e-10`). Server
+  při ukládání probability PŘEPOČÍTÁVÁ (uložená hodnota je autoritativní).
+  Patient label je jen štítek, ne PHI. Sekvenční ID `PT-000N` (editovatelné).
+- Model je tak implementovaný 3× (R / prohlížeč JS / TS Worker) — všechny musí
+  dávat shodné výsledky proti `..._test_cases.csv`.
 
 ## Model a data
 

@@ -8,6 +8,16 @@ library(plumber)
 source(file.path("R", "predict.R"), chdir = TRUE)
 BUNDLE <- load_bundle()
 
+# Display-only annotations (official names + clinical reference ranges), kept
+# separate from the model bundle. Missing file is non-fatal.
+REF <- tryCatch(
+  jsonlite::fromJSON(
+    Sys.getenv("D2T_REF", file.path("..", "variable_reference.json")),
+    simplifyVector = FALSE
+  ),
+  error = function(e) list(variables = list())
+)
+
 DISCLAIMER <- paste(
   "Teaching-only cross-sectional class probability, not a prospective D2T risk",
   "and not for clinical decisions."
@@ -52,8 +62,12 @@ function() {
     negative_class = BUNDLE$negative_class,
     predictors = BUNDLE$predictors,
     inputs = lapply(seq_len(nrow(s)), function(i) {
+      ann <- REF$variables[[s$name[i]]]
       list(
-        name = s$name[i], label = s$label[i], unit = s$unit[i],
+        name = s$name[i],
+        label = if (!is.null(ann$official_label)) ann$official_label else s$label[i],
+        unit = s$unit[i],
+        reference = if (!is.null(ann$reference)) ann$reference else NA,
         imputation_median = s$imputation_median[i],
         observed_min = s$observed_min[i], observed_max = s$observed_max[i]
       )

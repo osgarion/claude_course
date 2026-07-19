@@ -155,3 +155,44 @@ footer { margin-top: 28px; display: flex; justify-content: space-between; align-
   .crow { grid-template-columns: 96px 1fr 60px; gap: 7px; font-size: 0.76rem; }
   .cname { font-size: 0.72rem; }
 }
+
+/* ---- Auth bar + assessment storage (Worker build) ---- */
+.authbar { margin-bottom: 20px; }
+.auth-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.auth-form input {
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--ink); font-size: 0.9rem; min-width: 140px;
+}
+.auth-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.auth-msg { font-size: 0.82rem; color: var(--warn); }
+.auth-user-box { font-size: 0.9rem; color: var(--muted); display: flex; gap: 10px; align-items: center; }
+.auth-user-box strong { color: var(--ink); }
+
+.save-panel { border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 10px; }
+.save-panel h3 { margin: 0; font-size: 0.95rem; }
+.save-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.save-panel input {
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--ink); font-size: 0.9rem; flex: 1; min-width: 160px;
+}
+.save-hint { color: var(--muted); font-size: 0.76rem; margin: 0; }
+
+.assessments { margin-top: 24px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px; }
+.assessments h2 { margin: 0 0 14px; font-size: 1.05rem; }
+.assess-list { display: grid; gap: 8px; }
+.assess-empty { color: var(--muted); font-size: 0.88rem; margin: 0; }
+.assess-row {
+  display: grid; grid-template-columns: auto auto 1fr auto; gap: 12px; align-items: center;
+  padding: 8px 12px; border: 1px solid var(--line); border-radius: 9px; font-size: 0.86rem;
+}
+.a-label { font-weight: 600; font-variant-numeric: tabular-nums; }
+.a-pct { font-weight: 600; }
+.a-pct.d2t { color: var(--d2t); }
+.a-pct.rem { color: var(--rem); }
+.a-when { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-del { padding: 3px 9px; line-height: 1; }
+
+@media (max-width: 460px) {
+  .assess-row { grid-template-columns: 1fr auto; }
+  .a-when { grid-column: 1 / -1; white-space: normal; }
+}

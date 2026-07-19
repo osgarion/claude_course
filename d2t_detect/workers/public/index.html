@@ -13,6 +13,22 @@
       <p class="sub">Established D2T RA vs. remission — augmented Firth logistic model</p>
     </header>
 
+    <div id="authbar" class="authbar">
+      <div id="auth-anon" class="auth-anon">
+        <form id="auth-form" class="auth-form">
+          <input id="auth-user" type="text" placeholder="username" autocomplete="username" aria-label="username" />
+          <input id="auth-pass" type="password" placeholder="password (8+)" autocomplete="current-password" aria-label="password" />
+          <button type="submit" id="auth-login" class="ghost">Log in</button>
+          <button type="button" id="auth-register" class="ghost">Register</button>
+        </form>
+        <span id="auth-msg" class="auth-msg" role="alert"></span>
+      </div>
+      <div id="auth-user-box" class="auth-user-box" hidden>
+        Signed in as <strong id="auth-who"></strong>
+        <button type="button" id="auth-logout" class="ghost">Log out</button>
+      </div>
+    </div>
+
     <div class="disclaimer" role="note">
       <strong>Teaching only.</strong> This is a cross-sectional class probability, <em>not</em> a
       prospective D2T risk and <em>not</em> for clinical decisions.
@@ -80,6 +96,25 @@
           to the <span class="swatch rem"></span>&nbsp;left toward remission.
         </p>
       </div>
+
+      <div id="save-panel" class="save-panel" hidden>
+        <h3>Store this assessment</h3>
+        <div class="save-row">
+          <input id="save-label" type="text" placeholder="patient label (e.g. PT-0001)" aria-label="patient label" />
+          <button type="button" id="save-suggest" class="ghost" title="Suggest the next PT-000N">Suggest ID</button>
+        </div>
+        <input id="save-note" type="text" placeholder="note (optional)" aria-label="note" />
+        <div class="save-row">
+          <button type="button" id="save-btn" class="primary">Save assessment</button>
+          <span id="save-msg" class="auth-msg" role="status"></span>
+        </div>
+        <p class="save-hint">Teaching data only — the label is not a real patient identifier.</p>
+      </div>
+    </section>
+
+    <section id="assessments" class="assessments" hidden>
+      <h2>My saved assessments</h2>
+      <div id="assess-list" class="assess-list"></div>
     </section>
 
     <p class="citation">

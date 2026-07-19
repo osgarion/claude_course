@@ -295,3 +295,173 @@ async function main() {
 }
 
 main();
+
+// ---- Auth + assessment storage (Worker API) --------------------------------
+// This block talks to the same-origin Worker (/api/*). It reuses readForm()/
+// MODEL from above to read the current inputs when saving.
+
+(function authModule() {
+  const TOKEN_KEY = "d2t_token";
+  const USER_KEY = "d2t_user";
+  const $ = (id) => document.getElementById(id);
+
+  const getToken = () => localStorage.getItem(TOKEN_KEY);
+  const setSession = (token, username) => {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, username);
+  };
+  const clearSession = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  };
+
+  async function api(path, { method = "GET", body } = {}) {
+    const headers = { "Content-Type": "application/json" };
+    const token = getToken();
+    if (token) headers.Authorization = `Token ${token}`;
+    const res = await fetch(`/api${path}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+    return data;
+  }
+
+  function isLoggedIn() {
+    return !!getToken();
+  }
+
+  function renderAuthState() {
+    const anon = $("auth-anon");
+    const box = $("auth-user-box");
+    const savePanel = $("save-panel");
+    const assess = $("assessments");
+    if (isLoggedIn()) {
+      anon.hidden = true;
+      box.hidden = false;
+      $("auth-who").textContent = localStorage.getItem(USER_KEY) || "";
+      // Save panel appears once a result is on screen.
+      savePanel.hidden = $("result").hidden;
+      assess.hidden = false;
+      loadAssessments();
+    } else {
+      anon.hidden = false;
+      box.hidden = true;
+      savePanel.hidden = true;
+      assess.hidden = true;
+    }
+  }
+
+  async function doAuth(path) {
+    const username = $("auth-user").value.trim();
+    const password = $("auth-pass").value;
+    const msg = $("auth-msg");
+    msg.textContent = "";
+    try {
+      const data = await api(path, { method: "POST", body: { username, password } });
+      setSession(data.token, data.user.username);
+      $("auth-pass").value = "";
+      renderAuthState();
+    } catch (e) {
+      msg.textContent = e.message;
+    }
+  }
+
+  async function suggestId() {
+    try {
+      const data = await api("/assessments/next-id");
+      $("save-label").value = data.patient_label;
+    } catch (e) {
+      $("save-msg").textContent = e.message;
+    }
+  }
+
+  async function saveAssessment() {
+    const msg = $("save-msg");
+    msg.textContent = "";
+    try {
+      const { raw } = readForm(MODEL); // nulls for blanks -> server imputes
+      const data = await api("/assessments", {
+        method: "POST",
+        body: {
+          patient_label: $("save-label").value.trim() || undefined,
+          note: $("save-note").value.trim() || undefined,
+          inputs: raw,
+        },
+      });
+      msg.textContent = `Saved ${data.patient_label} (${(100 * data.p_d2t).toFixed(1)}% D2T)`;
+      $("save-note").value = "";
+      loadAssessments();
+    } catch (e) {
+      msg.textContent = e.message;
+    }
+  }
+
+  async function loadAssessments() {
+    const wrap = $("assess-list");
+    try {
+      const data = await api("/assessments");
+      if (!data.items.length) {
+        wrap.innerHTML = '<p class="assess-empty">No saved assessments yet.</p>';
+        return;
+      }
+      wrap.innerHTML = data.items
+        .map((a) => {
+          const pct = (100 * a.p_d2t).toFixed(1);
+          const cls = a.predicted_class === "d2t" ? "d2t" : "rem";
+          const when = String(a.created_at || "").replace("T", " ");
+          const note = a.note ? ` · ${escapeHtml(a.note)}` : "";
+          return `<div class="assess-row">
+            <span class="a-label">${escapeHtml(a.patient_label)}</span>
+            <span class="a-pct ${cls}">${pct}% ${a.predicted_class.toUpperCase()}</span>
+            <span class="a-when">${escapeHtml(when)}${note}</span>
+            <button class="a-del ghost" data-id="${a.id}" title="Delete">✕</button>
+          </div>`;
+        })
+        .join("");
+      wrap.querySelectorAll(".a-del").forEach((b) =>
+        b.addEventListener("click", async () => {
+          try {
+            await api(`/assessments/${b.dataset.id}`, { method: "DELETE" });
+            loadAssessments();
+          } catch (e) {
+            $("assess-list").insertAdjacentHTML("afterbegin", `<p class="assess-empty">${escapeHtml(e.message)}</p>`);
+          }
+        }),
+      );
+    } catch (e) {
+      wrap.innerHTML = `<p class="assess-empty">${escapeHtml(e.message)}</p>`;
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+
+  // Wire up events.
+  $("auth-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    doAuth("/auth/login");
+  });
+  $("auth-register").addEventListener("click", () => doAuth("/auth/register"));
+  $("auth-logout").addEventListener("click", async () => {
+    try {
+      await api("/auth/logout", { method: "POST" });
+    } catch {
+      /* revoke best-effort; clear locally regardless */
+    }
+    clearSession();
+    renderAuthState();
+  });
+  $("save-suggest").addEventListener("click", suggestId);
+  $("save-btn").addEventListener("click", saveAssessment);
+
+  // Reveal the save panel after a compute when logged in.
+  $("form").addEventListener("submit", () => {
+    if (isLoggedIn()) $("save-panel").hidden = false;
+  });
+
+  renderAuthState();
+})();
