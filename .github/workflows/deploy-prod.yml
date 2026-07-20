@@ -11,7 +11,8 @@ name: Deploy prod
 on:
   push:
     branches: [main]
-    paths: ["workers/**", ".github/workflows/deploy-prod.yml"]
+    # Jen změny v kódu Workeru nasazují; čistě dokumentační (*.md) ne.
+    paths: ["pixel-pantry/workers/**", "!pixel-pantry/workers/**/*.md", ".github/workflows/deploy-prod.yml"]
   workflow_dispatch:
 
 # Dvě nasazení najednou by si šláplo do migrací/deploye - radši je serializuj.
@@ -21,7 +22,7 @@ concurrency:
 
 defaults:
   run:
-    working-directory: workers
+    working-directory: pixel-pantry/workers
 
 jobs:
   deploy:
@@ -36,7 +37,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: workers/package-lock.json
+          cache-dependency-path: pixel-pantry/workers/package-lock.json
       - run: npm ci
 
       # worker-configuration.d.ts je generovaný (gitignored) - vygeneruj z
