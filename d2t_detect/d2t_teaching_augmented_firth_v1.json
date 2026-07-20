@@ -1,0 +1,133 @@
+{
+  "model_id": "d2t_teaching_augmented_firth_v1",
+  "version": "1.0.0",
+  "created": "2026-07-17 15:40:53 CEST",
+  "purpose": "Teaching-only cross-sectional classification of established D2T RA versus remission; not a prospective risk model.",
+  "model_type": "Firth penalized logistic regression",
+  "positive_class": "d2t",
+  "negative_class": "rem",
+  "predictors": ["DAS28_FW_fup", "CRP_fup", "duration_trt_ombi", "orm1", "fstl1"],
+  "input_schema": [
+    {
+      "name": "DAS28_FW_fup",
+      "label": "DAS28-ESR",
+      "unit": "score",
+      "type": "number",
+      "required": false,
+      "missing_action": "replace with training median",
+      "imputation_median": 2.2648459511504044,
+      "observed_min": 0.69520302639196163,
+      "observed_max": 8.782693651277647,
+      "n_missing_training": 3
+    },
+    {
+      "name": "CRP_fup",
+      "label": "CRP",
+      "unit": "mg/L",
+      "type": "number",
+      "required": false,
+      "missing_action": "replace with training median",
+      "imputation_median": 2.7799999999999998,
+      "observed_min": 0.14999999999999999,
+      "observed_max": 124.68000000000001,
+      "n_missing_training": 1
+    },
+    {
+      "name": "duration_trt_ombi",
+      "label": "trt duration",
+      "unit": "months",
+      "type": "number",
+      "required": false,
+      "missing_action": "replace with training median",
+      "imputation_median": 33.330595482546201,
+      "observed_min": -37.68377823408624,
+      "observed_max": 252.12320328542094,
+      "n_missing_training": 6
+    },
+    {
+      "name": "orm1",
+      "label": "ORM1 (orosomucoid)",
+      "unit": "ng/mL",
+      "type": "number",
+      "required": false,
+      "missing_action": "replace with training median",
+      "imputation_median": 160300,
+      "observed_min": 17200,
+      "observed_max": 986000,
+      "n_missing_training": 1
+    },
+    {
+      "name": "fstl1",
+      "label": "FSTL1",
+      "unit": "ng/mL",
+      "type": "number",
+      "required": false,
+      "missing_action": "replace with training median",
+      "imputation_median": 9526.6659999999993,
+      "observed_min": 385.18299999999999,
+      "observed_max": 49835.614000000001,
+      "n_missing_training": 22
+    }
+  ],
+  "preprocessing": {
+    "missing_values": "Median imputation using the stored training medians.",
+    "fitting_scale": "Predictors z-score standardized for fitting.",
+    "deployment_scale": "Raw input units; coefficients were algebraically back-transformed.",
+    "imputation_medians": {
+      "DAS28_FW_fup": 2.2648459511504044,
+      "CRP_fup": 2.7799999999999998,
+      "duration_trt_ombi": 33.330595482546201,
+      "orm1": 160300,
+      "fstl1": 9526.6659999999993
+    },
+    "normalization_means": {
+      "DAS28_FW_fup": 3.0670501273328323,
+      "CRP_fup": 7.7488541666666668,
+      "duration_trt_ombi": 46.882614647501711,
+      "orm1": 231654.17499999999,
+      "fstl1": 17728.414166666666
+    },
+    "normalization_sds": {
+      "DAS28_FW_fup": 1.7615600886572336,
+      "CRP_fup": 18.348843294665553,
+      "duration_trt_ombi": 50.421664736886974,
+      "orm1": 215284.34061391177,
+      "fstl1": 17630.08544151657
+    }
+  },
+  "coefficients": {
+    "raw_scale_intercept": -4.6973178899409103,
+    "raw_scale": {
+      "DAS28_FW_fup": 1.4649356956935342,
+      "CRP_fup": -0.00073402046179610997,
+      "duration_trt_ombi": -0.012166338698613725,
+      "orm1": 3.6847530373610661e-06,
+      "fstl1": -2.045586383357065e-05
+    },
+    "standardized_scale": {
+      "(Intercept)": -0.28942586555140282,
+      "DAS28_FW_fup": 2.5805722539830485,
+      "CRP_fup": -0.013468426428574865,
+      "duration_trt_ombi": -0.61344705093691498,
+      "orm1": 0.79326962797338574,
+      "fstl1": -0.36063862716587924
+    }
+  },
+  "equation": "p_d2t = 1 / (1 + exp(-(intercept + sum(raw_scale_coefficient_j * median_imputed_raw_predictor_j))))",
+  "training_summary": {
+    "source": "reports/objects/manuscript_04_elisa.RData::d10_elisa_attra",
+    "cohort": "ELISA sensitivity cohort used by manuscript 05",
+    "n": 96,
+    "class_counts": {
+      "d2t": 38,
+      "rem": 58
+    },
+    "seed": null,
+    "fit_scope": "Full available sensitivity cohort after manuscript filters."
+  },
+  "known_data_issue": "The source cohort contains at least one negative duration_trt_ombi value. It was retained to reproduce the manuscript data definition; web inputs should use non-negative months.",
+  "implementation_notes": ["Read all five raw numeric inputs in the documented units.", "Replace null/NA inputs with input_schema.imputation_median.", "Compute the linear predictor with coefficients.raw_scale.", "Return plogis(linear_predictor) as the teaching D2T-class probability.", "Do not label the output as future D2T risk or use it for clinical decisions."],
+  "contains_patient_rows": false,
+  "contains_identifiers": false,
+  "rds_sha256": "789e7f995f27ac3afc8c5a9a9f86a99772ae7d740bd5af2066b06be08b235198"
+}
