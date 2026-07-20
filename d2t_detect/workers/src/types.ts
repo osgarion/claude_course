@@ -14,6 +14,15 @@ export interface Variables {
   user: AuthUser | null;
 }
 
-export type Bindings = Cloudflare.Env;
+/**
+ * SENTRY_DSN is intentionally NOT declared as a var in wrangler.jsonc —
+ * Cloudflare rejects a var and secret of the same name. It lives only as a
+ * secret (`wrangler secret put SENTRY_DSN`), so we add its type by hand. Unset
+ * = Sentry disabled (errors still go to Workers Logs + D1). Each project uses
+ * its OWN Sentry project/DSN, so d2t_detect and pixel-pantry stay separate.
+ */
+export type Bindings = Cloudflare.Env & {
+  readonly SENTRY_DSN?: string;
+};
 
 export type AppEnv = { Bindings: Bindings; Variables: Variables };

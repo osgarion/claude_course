@@ -11,9 +11,13 @@
     "types": "wrangler types",
     "test": "vitest run",
     "db:migrate:local": "wrangler d1 migrations apply d2t-detect --local",
-    "db:migrate:remote": "wrangler d1 migrations apply d2t-detect --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply d2t-detect --remote",
+    "logs:tail": "wrangler tail d2t-detect --format pretty",
+    "errors:list": "wrangler d1 execute d2t-detect --remote --command \"SELECT id, created_at, method, path, status, name, message FROM error_log ORDER BY id DESC LIMIT 20\"",
+    "errors:list:local": "wrangler d1 execute d2t-detect --local --command \"SELECT id, created_at, method, path, status, name, message FROM error_log ORDER BY id DESC LIMIT 20\""
   },
   "dependencies": {
+    "@sentry/cloudflare": "^10.66.0",
     "hono": "^4.12.29",
     "zod": "^4.4.3"
   },

@@ -64,6 +64,30 @@ npm run db:migrate:remote          # apply migrations to production D1
 npm run deploy                     # publish to *.workers.dev
 ```
 
+## Error logging & monitoring
+
+Unexpected (5xx) errors are recorded in **three** project-scoped places — never
+mixed with pixel-pantry:
+
+1. **Workers Logs** — `console.error` with full method/path/name/message/stack.
+   Watch live: `npm run logs:tail` (`wrangler tail d2t-detect`).
+2. **D1 `error_log` table** — persistent history in *this* project's D1.
+   List recent: `npm run errors:list` (remote) / `npm run errors:list:local`.
+3. **Sentry** — only if a DSN is configured (feature-gated; no DSN = skipped).
+
+Expected client errors (400/401/404/409/429) are **not** logged — they're normal.
+
+### Enabling Sentry (per-project — use a NEW Sentry project, not pixel-pantry's)
+
+1. Create a Sentry project (platform: Cloudflare Workers) and copy its DSN.
+2. Local dev: copy `.dev.vars.example` → `.dev.vars`, paste the DSN.
+3. Production: `npx wrangler secret put SENTRY_DSN` (paste when prompted), then
+   `npm run deploy`.
+
+Without a DSN, errors still go to Workers Logs + D1 — Sentry is just skipped.
+Requires the `nodejs_compat` flag (already set in `wrangler.jsonc`; the Sentry SDK
+imports `node:async_hooks`).
+
 ## Notes
 
 - `AUTH_LIMITER` (rate limit) is a no-op locally and in tests; it only bites in

@@ -1,0 +1,63 @@
+name: Deploy prod (d2t)
+
+# Push do main = nasazení d2t_detect: testy -> migrace D1 -> deploy -> smoke test.
+# Kroky joby jsou sekvenční a při chybě se přeruší, takže rozbitý build se
+# k deployi nedostane.
+#
+# Používá stejné GitHub secrety jako pixel-pantry (stejný Cloudflare účet):
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
+# POZOR: SENTRY_DSN je wrangler secret nastavený přímo na workeru
+# (`wrangler secret put`), NENÍ v CI - `wrangler deploy` ho nepřepisuje, přežije.
+on:
+  push:
+    branches: [main]
+    # Jen změny v kódu Workeru nasazují; čistě dokumentační (*.md) ne.
+    paths:
+      ["d2t_detect/workers/**", "!d2t_detect/workers/**/*.md", ".github/workflows/deploy-prod-d2t.yml"]
+  workflow_dispatch:
+
+# Vlastní concurrency skupina (oddělená od pixel-pantry deploye).
+concurrency:
+  group: deploy-prod-d2t
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: d2t_detect/workers
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: d2t_detect/workers/package-lock.json
+      - run: npm ci
+
+      # worker-configuration.d.ts je generovaný (gitignored) - vygeneruj z
+      # wrangler.jsonc (offline), jinak typecheck spadne na TS2688. Viz ci-d2t.yml.
+      - run: npx wrangler types
+
+      # Testy první, ve stejné jobě - červený build se k deployi nedostane.
+      - run: npm run typecheck
+      - run: npm test
+
+      # Migrace běží PŘED nasazením nového kódu. Aditivní změny v pohodě;
+      # destruktivní jeď expand-then-contract přes dva deploye.
+      - name: Apply D1 migrations (prod)
+        run: npx wrangler d1 migrations apply d2t-detect --remote
+
+      - name: Deploy (prod)
+        run: npx wrangler deploy
+
+      - name: Smoke test
+        run: |
+          curl -fsS https://d2t-detect.pixel-pantry-course.workers.dev/api/health \
+            | grep -q '"status":"ok"'

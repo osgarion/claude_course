@@ -18,9 +18,10 @@ Obecný kontext uživatele a přehled ostatních projektů viz kořenový `../CL
   pravdy modelu** (re-exportuje bundle); na Cloudflare se NEnasazuje (R tam
   neběží).
 - **Deployable** (`workers/`): Cloudflare Worker (Hono + D1, TypeScript) —
-  stejný stack jako pixel-pantry. Servíruje frontend (`public/`) + API na
-  `/api/*`, login (PBKDF2 + token, převzato z pixel-pantry) a per-user ukládání
-  hodnocení do D1. Model math v `src/model.ts` (port z `predict.R`, čte bundle
+  stejný stack jako pixel-pantry. **Nasazený** na
+  <https://d2t-detect.pixel-pantry-course.workers.dev> (D1 `d2t-detect`, region
+  EEUR). Servíruje frontend (`public/`) + API na `/api/*`, login (PBKDF2 +
+  token, převzato z pixel-pantry) a per-user ukládání hodnocení do D1. Model math v `src/model.ts` (port z `predict.R`, čte bundle
   JSON); parita s R/JS hlídaná `tests/model.test.ts` (tolerance `1e-10`). Server
   při ukládání probability PŘEPOČÍTÁVÁ (uložená hodnota je autoritativní).
   Patient label je jen štítek, ne PHI. Sekvenční ID `PT-000N` (editovatelné).

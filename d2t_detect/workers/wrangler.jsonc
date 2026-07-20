@@ -4,6 +4,10 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-07-01",
 
+  // @sentry/cloudflare importuje node:async_hooks — bez tohohle flagu deploy
+  // spadne na "No such module node:async_hooks" (code 10021).
+  "compatibility_flags": ["nodejs_compat"],
+
   // Statický frontend servíruje tentýž Worker co API -> stejný origin, žádné
   // CORS, jeden deploy. run_worker_first vynutí, aby /api/* šlo na Worker a ne
   // do statických assetů. not_found_handling nikdy nenastavovat na "single-
@@ -19,10 +23,8 @@
     {
       "binding": "DB",
       "database_name": "d2t-detect",
-      // PLACEHOLDER - lokální `wrangler dev` jen potřebuje neprázdnou hodnotu.
-      // PŘED nasazením nahraď skutečným id z `wrangler d1 create d2t-detect`
-      // (viz README), jinak deploy míří na neexistující DB.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Skutečná D1 (region EEUR), vytvořená přes `wrangler d1 create d2t-detect`.
+      "database_id": "55c9c18f-b1ed-4cde-86c6-2915bf5d29e4",
       "migrations_dir": "migrations"
     }
   ],

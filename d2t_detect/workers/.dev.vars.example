@@ -1,0 +1,11 @@
+# Template for local development. Copy to `.dev.vars` (gitignored) and fill in.
+#
+# In production the DSN is NOT set here or in wrangler.jsonc, but as a secret:
+#   npx wrangler secret put SENTRY_DSN
+#
+# Unset/empty = Sentry disabled: errors are still written to Workers Logs and to
+# this project's D1 error_log, just not sent to Sentry.
+#
+# IMPORTANT: use a Sentry project dedicated to d2t_detect — do not reuse
+# pixel-pantry's DSN, or the two projects' errors would mix.
+SENTRY_DSN=https://...@...ingest.sentry.io/...
