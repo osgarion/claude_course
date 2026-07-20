@@ -1,0 +1,34 @@
+name: CI (d2t)
+
+# Testovací stupeň pro d2t_detect. Běží na každé PR i push do main a nepotřebuje
+# žádné Cloudflare klíče: vitest ověřuje čistou model-matematiku v Node. Filtr
+# `d2t_detect/workers/**` drží běhy projektů oddělené (viz kořenový CLAUDE.md) -
+# změny v pixel-pantry sem nesahají.
+on:
+  pull_request:
+    paths: ["d2t_detect/workers/**", ".github/workflows/ci-d2t.yml"]
+  push:
+    branches: [main]
+    paths: ["d2t_detect/workers/**", ".github/workflows/ci-d2t.yml"]
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: d2t_detect/workers
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: d2t_detect/workers/package-lock.json
+      - run: npm ci
+      # worker-configuration.d.ts je generovaný (gitignored) - vygeneruj z
+      # wrangler.jsonc (offline, bez cloud klíčů), jinak typecheck spadne na TS2688.
+      - run: npx wrangler types
+      - run: npm run typecheck
+      - run: npm test
