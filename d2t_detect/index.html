@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D2T teaching classifier</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>D2T teaching classifier</h1>
+      <p class="sub">Established D2T RA vs. remission — augmented Firth logistic model</p>
+    </header>
+
+    <div class="disclaimer" role="note">
+      <strong>Teaching only.</strong> This is a cross-sectional class probability, <em>not</em> a
+      prospective D2T risk and <em>not</em> for clinical decisions.
+    </div>
+
+    <details class="about">
+      <summary>About this model — what it is, where it's from, how good it is</summary>
+      <div class="about-body">
+        <p><strong>What is D2T RA?</strong> "Difficult-to-treat" rheumatoid arthritis (EULAR
+          definition) — RA that keeps failing multiple biologic / targeted-synthetic DMARD
+          therapies.</p>
+        <p><strong>What this tool does.</strong> Estimates the probability that a patient belongs to
+          the D2T class rather than sustained remission, from three clinical measures (DAS28-ESR,
+          CRP, treatment duration) plus two plasma proteins (ORM1, FSTL1), using a Firth penalised
+          logistic regression.</p>
+        <p><strong>Where it comes from.</strong> A teaching reimplementation of the model in Baloun
+          et&nbsp;al., <em>"Towards prospective identification of difficult-to-treat rheumatoid
+          arthritis: large-scale plasma proteomics reveals ORM1 as a circulating predictor"</em>
+          (Institute of Rheumatology, Prague). Discovery cohort 198 patients (108 remission /
+          90&nbsp;D2T); ELISA validation cohort n&nbsp;=&nbsp;96 (38 D2T / 58 remission).</p>
+        <p><strong>How good is it?</strong> In the paper, ORM1 alone reached AUC&nbsp;≈&nbsp;0.86;
+          the augmented model (clinical baseline + ORM1) reached AUC&nbsp;≈&nbsp;0.93. ORM1 is an
+          acute-phase protein measurable by standard ELISA — the study's key validated finding.</p>
+        <p><strong>Important limits.</strong> Teaching only, not for clinical decisions. This app
+          does <em>cross-sectional</em> classification (D2T vs remission); the paper's real
+          contribution is <em>prospective</em> prediction from samples taken a median of 2.4–5.8
+          years before diagnosis. Small, single-centre cohorts — treat every number as
+          illustrative.</p>
+      </div>
+    </details>
+
+    <form id="form" novalidate>
+      <div class="fields" id="fields"><!-- inputs injected from input_schema --></div>
+      <p class="hint">Leave a field blank to use its training median (shown as placeholder).</p>
+      <div class="actions">
+        <button type="submit" class="primary">Compute</button>
+        <button type="reset" class="ghost">Clear</button>
+      </div>
+    </form>
+
+    <section id="result" class="result" hidden aria-live="polite">
+      <div class="verdict">
+        <div class="pct" id="pct">—</div>
+        <div class="pct-label">teaching D2T-class probability</div>
+        <div class="bar" role="img" aria-label="probability toward D2T">
+          <div class="bar-fill" id="bar-fill"></div>
+          <div class="bar-threshold" title="50% decision boundary"></div>
+        </div>
+        <div class="bar-scale"><span>0% · remission</span><span>50%</span><span>D2T · 100%</span></div>
+      </div>
+
+      <div class="detail">
+        <p><span class="k">Predicted class</span><span id="klass" class="v">—</span></p>
+        <p><span class="k">p(remission)</span><span id="prem" class="v">—</span></p>
+        <p id="imputed-line" hidden><span class="k">Imputed (blank → median)</span><span id="imputed" class="v"></span></p>
+        <p id="range-line" hidden class="warn"><span class="k">Outside training range</span><span id="oor" class="v"></span></p>
+      </div>
+
+      <div class="contrib">
+        <h3>Why this score — contribution to the log-odds (η)</h3>
+        <div id="contrib-bars" class="contrib-bars"></div>
+        <p class="contrib-note">
+          η = <span id="eta-val">—</span>, then p = 1 / (1 + e<sup>−η</sup>).
+          Bars to the <span class="swatch d2t"></span>&nbsp;right push toward D2T,
+          to the <span class="swatch rem"></span>&nbsp;left toward remission.
+        </p>
+      </div>
+    </section>
+
+    <p class="citation">
+      Model reimplemented for teaching from: Baloun J, et&nbsp;al. <em>Towards prospective
+      identification of difficult-to-treat rheumatoid arthritis: large-scale plasma proteomics
+      reveals ORM1 as a circulating predictor.</em> Institute of Rheumatology, Prague.
+    </p>
+
+    <footer>
+      <div id="selftest" class="selftest" title="Runs the synthetic test cases against .pred_d2t">
+        self-test: <span id="st-status">running…</span>
+      </div>
+      <div id="model-meta" class="meta"></div>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

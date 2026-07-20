@@ -1,0 +1,50 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "d2t-detect",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+
+  // @sentry/cloudflare importuje node:async_hooks — bez tohohle flagu deploy
+  // spadne na "No such module node:async_hooks" (code 10021).
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Statický frontend servíruje tentýž Worker co API -> stejný origin, žádné
+  // CORS, jeden deploy. run_worker_first vynutí, aby /api/* šlo na Worker a ne
+  // do statických assetů. not_found_handling nikdy nenastavovat na "single-
+  // page-application" - vracelo by index.html i na /api/* a API by tiše umřelo.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
+    "not_found_handling": "404-page"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "d2t-detect",
+      // Skutečná D1 (region EEUR), vytvořená přes `wrangler d1 create d2t-detect`.
+      "database_id": "55c9c18f-b1ed-4cde-86c6-2915bf5d29e4",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Brzda na brute-force login/registrace. period smí být jen 10 nebo 60 s.
+  // Per-colo a eventually consistent -> zmírnění, ne bezpečnostní hranice.
+  // Middleware je no-op, když binding chybí (testy, `wrangler dev`).
+  "ratelimits": [
+    {
+      "name": "AUTH_LIMITER",
+      "namespace_id": "2001",
+      "simple": { "limit": 10, "period": 60 }
+    }
+  ],
+
+  "vars": {
+    // PBKDF2 je na Workers zastropované na 100k iterací a free plan má 10 ms
+    // CPU/request. Slabší než serverový bcrypt/argon2 - daň za free tier.
+    "PBKDF2_ITERATIONS": "100000"
+  },
+
+  "observability": { "enabled": true }
+}

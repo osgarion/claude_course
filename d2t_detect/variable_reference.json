@@ -1,0 +1,30 @@
+{
+  "description": "Display-only clinical annotations for the D2T teaching classifier inputs. NOT part of the model bundle (coefficients live in d2t_teaching_augmented_firth_v1.json/.rds). Official variable names plus clinical reference ranges / interpretation thresholds where reliably known. General adult values; actual reference ranges vary by lab and assay. Teaching use only.",
+  "variables": {
+    "DAS28_FW_fup": {
+      "official_label": "DAS28-ESR (Disease Activity Score, 28 joints)",
+      "reference": "Activity: remission <2.6 · low 2.6–3.2 · moderate >3.2–5.1 · high >5.1",
+      "reference_known": true
+    },
+    "CRP_fup": {
+      "official_label": "C-reactive protein (CRP)",
+      "reference": "Normal <5 mg/L (typical adult reference; some labs use <10)",
+      "reference_known": true
+    },
+    "duration_trt_ombi": {
+      "official_label": "Treatment duration",
+      "reference": "No clinical reference range — context-dependent (months, ≥0)",
+      "reference_known": false
+    },
+    "orm1": {
+      "official_label": "Orosomucoid / α1-acid glycoprotein (ORM1)",
+      "reference": "Serum α1-acid glycoprotein normal ≈0.5–1.2 g/L (≈500,000–1,200,000 ng/mL); this assay's ng/mL scale may differ",
+      "reference_known": true
+    },
+    "fstl1": {
+      "official_label": "Follistatin-like protein 1 (FSTL1)",
+      "reference": "No established clinical reference range (research biomarker)",
+      "reference_known": false
+    }
+  }
+}

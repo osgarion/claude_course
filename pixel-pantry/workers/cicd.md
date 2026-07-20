@@ -5,10 +5,12 @@ Inspirováno referenčním `jurab/eshop-ts`, ale záměrně bez dev tieru — dr
 paritu na úrovni funkcí, ne architektury (viz CLAUDE.md), a projekt má zatím
 jednu produkční D1.
 
-Workflowy žijí v **kořeni repa** (`.github/workflows/`), ne ve `workers/`,
-protože GitHub Actions je čte jen odtamtud. Náš `workers/` je podsložka, takže
-každý job má `working-directory: workers` a path-filtr `workers/**` — změny jen
-v Django `backend/` deploy Workeru nespouštějí.
+Workflowy žijí v **kořeni repa** (`.github/workflows/`), ne v projektu,
+protože GitHub Actions je čte jen odtamtud. Worker je v podsložce
+`pixel-pantry/workers/`, takže každý job má `working-directory:
+pixel-pantry/workers` a path-filtr `pixel-pantry/workers/**` — změny jen
+v Django `pixel-pantry/backend/` (ani v jiných projektech monorepa) deploy
+Workeru nespouštějí.
 
 ## Topologie
 
